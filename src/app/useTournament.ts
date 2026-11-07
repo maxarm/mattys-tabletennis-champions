@@ -88,11 +88,13 @@ export function useTournament(repository: TournamentRepository, options: UseTour
     const t = current.current
     if (!t) throw new Error('Es gibt kein aktives Turnier.')
     const saved = await repository.dispatch(t.id, t.revision, operationId, command, sessionId.current!)
-    publish(saved)
     if (saved.status === 'archived') {
       const listed = await repository.listArchives()
       if (live.current) setArchives(listed)
     }
+    // Publish archive completion only together with its refreshed list. If the
+    // read fails after commit, retain the retry action and its operation ID.
+    publish(saved)
     return saved
   }), [enqueue, savePending, repository, publish])
   const create = useCallback((t: Tournament) => enqueue(async () => {

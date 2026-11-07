@@ -1,10 +1,10 @@
 # Matty’s Table Tennis Championships — Design
 
-Stand: 07.11.2026. Zur Freigabe; noch kein Implementierungsauftrag.
+Stand: 07.11.2026. Design vom Nutzer freigegeben; Umsetzung folgt mit separatem Implementierungsplan.
 
 ## Zweck und abgestimmter Umfang
 
-Eine deutschsprachige, installierbare Browser-App begleitet zwei Menschen beim echten Tischtennis. Sie teilen sich ein Smartphone und entscheiden vor jeder Partie selbst, wer welchen Nationalspieler übernimmt. Die App organisiert die Meisterschaft, zeigt unterhaltsame Spielerprofile und speichert die real gespielten Ergebnisse. Fähigkeiten verändern weder Regeln noch Punkte und simulieren keine Spiele.
+Eine deutschsprachige installierbare Progressive Web App für das heimische LAN über HTTPS begleitet zwei Menschen beim echten Tischtennis. Sie teilen sich ein Smartphone und entscheiden vor jeder Partie selbst, wer welchen Nationalspieler übernimmt. Die App organisiert die Meisterschaft, zeigt unterhaltsame Spielerprofile und speichert die real gespielten Ergebnisse. Fähigkeiten verändern weder Regeln noch Punkte und simulieren keine Spiele.
 
 Ziele: schnelle Bedienung an der Platte, nachvollziehbare Auslosungen, charaktervolle feste Spielerporträts, verlässliches Fortsetzen und ein lokales Turnierarchiv. Smartphone zuerst, am Desktop ebenfalls nutzbar. Keine Anmeldung, Synchronisation, Cloud-Datenbank, Online-Gegner oder Verwaltung der beiden echten Personen. Keine Werbung und keine externen Laufzeitdienste.
 
@@ -13,9 +13,9 @@ Ziele: schnelle Bedienung an der Platte, nachvollziehbare Auslosungen, charakter
 1. Installierbare Progressive Web App (PWA): nach vollständigem ersten Laden offline nutzbar, Startbildschirm-Verknüpfung, lokale Daten. Etwas mehr Aufwand für Offline-Cache und Aktualisierungen.
 2. Einfache Browser-Website: geringerer Aufwand, aber keine gezielt verlässliche Offline-Nutzung und Installation.
 
-Der Nutzer hat die installierbare PWA gewählt. Beide Ansätze speichern nur im verwendeten Browser auf diesem Gerät. Das Löschen der Website-Daten entfernt Turniere. Export und Import sind spätere Erweiterungen.
+Der Nutzer hat eine installierbare PWA mit Offline-Nutzung gewählt. Sie läuft ausschließlich zuhause im LAN über HTTPS, ohne öffentliche Veröffentlichung. Beide Ansätze speichern nur im verwendeten Browser auf diesem Gerät. Das Löschen der Website-Daten entfernt Turniere. Export und Import sind spätere Erweiterungen.
 
-Technischer Vorschlag des Autors: TypeScript, React und Vite; IndexedDB für Turniere, Web-App-Manifest und Service Worker für Offline-Nutzung. Diese Bibliothekswahl wurde noch nicht vom Nutzer vorgegeben. Versionswahl und konkrete Pakete bleiben der Umsetzung überlassen. In der aktuellen Umgebung fehlt Node.js; die Umsetzung muss eine geeignete Entwicklungsumgebung bereitstellen. Öffentliche Bereitstellung und Hosting sind noch nicht Teil dieses Designs; Installation und Service Worker benötigen eine sichere Auslieferung (HTTPS, lokal localhost).
+Technischer Vorschlag des Autors: TypeScript, React und Vite; IndexedDB für Turniere, Web-App-Manifest und Service Worker für Offline-Nutzung. Diese Bibliothekswahl wurde noch nicht vom Nutzer vorgegeben. Versionswahl und konkrete Pakete bleiben der Umsetzung überlassen. Node.js installiert der Nutzer selbst; keine eigenständige Installation durch den Agenten. Die App wird als statischer Build im heimischen LAN über HTTPS ausgeliefert, ohne Hostinganbieter oder Veröffentlichung. Der Server muss auf einer LAN-erreichbaren Schnittstelle lauschen. Service Worker werden ausschließlich in unterstützten sicheren Kontexten aktiviert, niemals als Voraussetzung für die normale Browsernutzung.
 
 ## Turnierregeln
 
@@ -38,33 +38,33 @@ Platzierung: Finalgewinner 1, Finalverlierer 2, Sieger des kleinen Finales 3, de
 
 ## Nationalspieler und feste Identitäten
 
-Der Pool umfasst genau die folgenden 23 Länder, mit jeweils drei vorab hinterlegten Spielern. Die sieben ausdrücklich genannten Namen bleiben exakt erhalten. Alle übrigen Namen in der Tabelle sind Vorschläge des Autors. Schreibweise des Landes: Uruguay.
+Der Pool umfasst genau die folgenden 23 Länder, mit jeweils drei vorab hinterlegten Spielern. Die sieben ausdrücklich genannten Namen bleiben exakt erhalten. Alle übrigen Namen in der Tabelle sind Vorschläge des Autors. Jeweils der dritte Name ist bewusst ein landessprachlich angelehnter Spaßname mit Tischtennis- oder Sportbezug, teils mit Spitznamen oder Wortspielen statt Anspruch auf einen üblichen bürgerlichen Namen. Alle drei Spieler werden gleich wahrscheinlich ausgewählt. Die vorgegebenen Namen bleiben unverändert an ihrer bisherigen Stelle. Schreibweise des Landes: Uruguay.
 
 | Land | Spieler 1 | Spieler 2 | Spieler 3 |
 | --- | --- | --- | --- |
-| Deutschland | Jonas Schmitt | Lukas Weber | Felix Bauer |
-| Österreich | Franz Hinterberger | Lukas Gruber | Tobias Leitner |
-| Nigeria | Oshimen | Chinedu Okafor | Tunde Adeyemi |
-| Japan | Haruto Tanaka | Ren Sato | Yuto Nakamura |
-| China | Ching Chang Chung | Wei Zhang | Jun Chen |
-| Polen | Piotr Kowalski | Jakub Nowak | Tomasz Zieliński |
-| Slowakei | Martin Kováč | Lukáš Horváth | Peter Varga |
-| Tschechien | Jan Novák | Tomáš Svoboda | Jakub Dvořák |
-| Schweden | Erik Lindberg | Johan Nyström | Viktor Andersson |
-| Dänemark | Mikael Larsson | Mikkel Nielsen | Rasmus Jensen |
-| Kroatien | Disch Denisovic | Luka Kovačević | Ivan Horvat |
-| Uruguay | Martín Rodríguez | Diego Fernández | Nicolás Pereira |
-| Spanien | Pablo García | Alejandro Martín | Diego López |
-| Australien | Player without Name | Jack Wilson | Oliver Harris |
-| Schweiz | Luca Meier | Simon Keller | Adrian Baumann |
-| England | Oliver Smith | Harry Bennett | George Taylor |
-| Frankreich | Hugo Moreau | Louis Dubois | Jules Laurent |
-| Italien | Matteo Rossi | Luca Bianchi | Marco Ricci |
-| Liechtenstein | Lukas Büchel | David Frommelt | Simon Gassner |
-| Südkorea | Min-jun Kim | Seo-jun Park | Ji-ho Lee |
-| Argentinien | Mateo González | Santiago Fernández | Tomás Romero |
-| Portugal | João Silva | Tiago Pereira | Diogo Costa |
-| Brasilien | Pedro Santos | Lucas Oliveira | Rafael Costa |
+| Deutschland | Jonas Schmitt | Lukas Weber | Benno Netzroller |
+| Österreich | Franz Hinterberger | Lukas Gruber | Sepp Schmetterer |
+| Nigeria | Oshimen | Chinedu Okafor | Tunde Topspin Adeyemi |
+| Japan | Haruto Tanaka | Ren Sato | Takumi Pingponda |
+| China | Ching Chang Chung | Wei Zhang | Hao Qiu |
+| Polen | Piotr Kowalski | Jakub Nowak | Piotr Paletkowski |
+| Slowakei | Martin Kováč | Lukáš Horváth | Marek Smečík |
+| Tschechien | Jan Novák | Tomáš Svoboda | Petr Pálka |
+| Schweden | Erik Lindberg | Johan Nyström | Bosse Kantboll |
+| Dänemark | Mikael Larsson | Mikkel Nielsen | Bo Bordtennis |
+| Kroatien | Disch Denisovic | Luka Kovačević | Goran Mrežić |
+| Uruguay | Martín Rodríguez | Diego Fernández | Pablo Paleta |
+| Spanien | Pablo García | Alejandro Martín | Paco Pelotazo |
+| Australien | Player without Name | Jack Wilson | Bruce Backspin |
+| Schweiz | Luca Meier | Simon Keller | Beat Netzli |
+| England | Oliver Smith | Harry Bennett | Harry Edgesworth |
+| Frankreich | Hugo Moreau | Louis Dubois | Jean-Philippe Filet |
+| Italien | Matteo Rossi | Luca Bianchi | Gigi Racchetta |
+| Liechtenstein | Lukas Büchel | David Frommelt | Fürst Flip von Vaduz |
+| Südkorea | Min-jun Kim | Seo-jun Park | Kim Ping-pong |
+| Argentinien | Mateo González | Santiago Fernández | Diego Paletazo |
+| Portugal | João Silva | Tiago Pereira | João Raquetinha |
+| Brasilien | Pedro Santos | Lucas Oliveira | Zé Saque |
 
 Jeder der 69 Spieler besitzt eine stabile ID und ein festes humorvolles Kopfporträt. Dieselbe Identität sieht in jedem Turnier gleich aus. Vorschlag des Autors: lokal hinterlegte SVG-Porträts, komponiert aus festen Gesichts-, Frisur- und Accessoire-Varianten pro Spieler; keine zur Laufzeit erzeugten Bilder. Unterschiede beruhen auf individuellen Merkmalen, ohne nationale Klischees. Die Vorschauköpfe sind Platzhalter; endgültige Porträts entstehen bei der Umsetzung. Länderflaggen werden als lokale Assets einschließlich eigener England-Flagge ausgeliefert.
 
@@ -72,19 +72,24 @@ Jeder der 69 Spieler besitzt eine stabile ID und ein festes humorvolles Kopfport
 
 Pro Turnierteilnehmer fünf unabhängige ganzzahlige Werte: Angriff (ANG), Verteidigung (VER), Service (SVC), Vorhand (VOR), Rückhand (RÜC). Für dasselbe Turnier bleiben sie fix, im nächsten Turnier werden sie neu ermittelt. Gesamtstärke = arithmetischer Mittelwert der fünf Werte, kaufmännisch auf eine ganze Zahl gerundet.
 
-Konkreter Verteilungsvorschlag des Autors, passend zu den gewünschten Häufigkeiten: Zuerst ein Intervall mit den untenstehenden Wahrscheinlichkeiten auswählen, darin eine ganze Zahl gleichverteilt ziehen. Damit liegen 80 % der Werte zwischen 70 und 85; hohe Werte werden zunehmend seltener.
+Überarbeiteter Verteilungsvorschlag des Autors: Intervall anhand seiner Wahrscheinlichkeit wählen, darin eine ganze Zahl gleichverteilt ziehen. 85–89 ist ein gemeinsames Intervall. Die Basisverteilung gilt für alle Länder außerhalb der sechs genannten Favoriten.
 
-| Werte | Wahrscheinlichkeit |
+| Werte | Basiswahrscheinlichkeit |
 | --- | ---: |
 | 1–49 | 1 % |
-| 50–69 | 10 % |
-| 70–84 | 77 % |
-| 85 | 3 % |
-| 86–89 | 5 % |
-| 90–94 | 3 % |
-| 95–97 | 0,8 % |
-| 98–99 | 0,18 % |
-| 100 | 0,02 % |
+| 50–69 | 8 % |
+| 70–84 | 66 % |
+| 85–89 | 13 % |
+| 90–94 | 8 % |
+| 95–97 | 3 % |
+| 98–99 | 0,8 % |
+| 100 | 0,2 % |
+
+Damit sind in der Basis 12 % der Fähigkeiten mindestens 90 und 4 % mythisch (zuvor 4 % beziehungsweise 1 %). Bei fünf unabhängig gezogenen Fähigkeiten hat ein Spieler ohne Länderbonus etwa 47 % Chance auf mindestens einen Wert ab 90 und 18,5 % auf mindestens einen mythischen Wert. Hohe Gesamtstärken bleiben seltener als einzelne Spitzenfähigkeiten.
+
+Die gewünschte fiktive Länderhierarchie ist China > Japan > Deutschland > Frankreich > Österreich > Kroatien. Sie ist eine Spielbalance-Vorgabe, keine Behauptung über reale Nationalmannschaften. Weil für die übrigen Länder keine Reihenfolge genannt wurde, werden sie gleich stark behandelt. Konkreter Balance-Vorschlag des Autors: Für Intervalle ab 85 wird das Basisgewicht mit dem Länderfaktor multipliziert, danach werden sämtliche Gewichte auf 100 % normalisiert. Für Intervalle unter 85 bleibt das Gewicht unverändert. Faktoren: China 2,0; Japan 1,8; Deutschland 1,6; Frankreich 1,45; Österreich 1,3; Kroatien 1,15; übrige Länder 1,0. Beispiel China: Gesamtgewicht 75 + 25 × 2 = 125; Wahrscheinlichkeit ab 90 = 24/125 = 19,2 %, mythisch = 8/125 = 6,4 %. Nicht direkt gerundete Prozenttabellen für die Ziehung verwenden.
+
+Die Hierarchie gilt im Erwartungswert über viele Turniere, nicht zwingend für ein einzelnes Feld. Jeder Spieler kann überraschend stark oder schwach werden. Keine nachträgliche Sortierung, kein garantierter Favoritensieg, kein Bonus auf Gesamtstärke und kein Einfluss auf Auslosungen. Landesspezifische Gewichte gehören zum versionierten Katalog; gezogene Einzelwerte bleiben im Turnier-Snapshot gespeichert.
 
 Eindeutige Seltenheiten: 1–84 gewöhnlich, 85–89 legendär (gelb), 90–94 episch (grün), 95–100 mythisch (violett). Bezeichnungen und Farben folgen dem Nutzerwunsch. Die Seltenheit betrifft einzelne Fähigkeiten; die Gesamtstärke erhält keine zusätzliche Seltenheitsklasse. Legende und Textlabels ergänzen Farben.
 
@@ -126,23 +131,27 @@ Fachlogik getrennt von Darstellung und Speicherung: Erzeugung, Auslosung, Satzva
 
 Vorschlag des Autors: nur ein bearbeitender Tab zur selben Zeit, zusätzliche Tabs öffnen vorhandene Daten lesend mit Hinweis. Die konkrete Sperrtechnik und Browser-Fallbacks bleiben der Umsetzung überlassen.
 
-## Installation, Offline-Betrieb und Updates
+## HTTPS im LAN, Installation, Offline-Betrieb und Updates
 
-App-Shell, Skripte, Schriften, Länderflaggen und Porträtbestandteile liegen lokal und werden für Offline-Betrieb gecacht. Nach erfolgreichem initialem Download ist der gesamte Turnierablauf einschließlich Archiv ohne Netz verfügbar. Erst bei vollständigem Cache signalisiert die App Offline-Bereitschaft. Manifest enthält Namen, Icons, Start-URL, Theme-Farbe und Standalone-Anzeige. Installationshilfe wird passend zur Browserfähigkeit angeboten; die normale Browsernutzung bleibt vollständig möglich.
+Betriebsziel ist eine feste HTTPS-Adresse im heimischen LAN. Der Smartphone-Browser lädt alle Assets vom Heimserver; keine CDN-Schriften, externen Bilder oder öffentlichen Dienste. Ein lokaler HTTPS-Server liefert den statischen Build aus, der Vite-Entwicklungsserver ist kein dauerhafter Produktivserver. Die konkrete Serverwahl bleibt der Umsetzung überlassen. Hostname beziehungsweise IP und Port bleiben konstant, da Browserdaten an den Origin gebunden sind. Ein Wechsel von HTTP zu HTTPS oder zu einer anderen Adresse übernimmt vorhandene Daten nicht automatisch.
 
-Updates werden angeboten, ohne während eines Matches automatisch neu zu laden. Daten bleiben erhalten, neue Versionen müssen das gespeicherte Schema verstehen. Ein fehlgeschlagenes Update ersetzt nicht die funktionierende Offline-Version. Die Entwicklungsumsetzung muss Installation und Service Worker auf einer echten HTTPS-Testbereitstellung oder entsprechend geeigneten lokalen Umgebung prüfen. Hostinganbieter und Veröffentlichung werden später festgelegt.
+HTTPS-Einrichtung und eine dokumentierte lokale Startanleitung gehören zur ersten Version. Ein lokales, auf dem Server und dem Smartphone vertrauenswürdiges Zertifikat deckt den verwendeten Hostnamen beziehungsweise die LAN-IP als Subject Alternative Name ab. Vorschlag des Autors: lokale Zertifizierungsstelle; die Anleitung beschreibt Zertifikatserzeugung und das erforderliche Installieren und Aktivieren des Vertrauens auf dem Smartphone. Eine bloß weggeklickte Zertifikatswarnung erfüllt die Abnahme nicht. Private Schlüssel und lokale Zertifikatsdateien werden nicht versioniert. Keine öffentliche Domain, Veröffentlichung oder Router-Portfreigabe erforderlich. Node.js installiert weiterhin der Nutzer selbst.
+
+Manifest und lokale Icons ermöglichen die Installation im Rahmen der jeweiligen Browserfunktionen; auf unterstützten Smartphones wird eine passende Installationshilfe angeboten. Service Worker und Cache enthalten App-Shell, Skripte, Schriften, Flaggen und Porträtbestandteile. Erst nach vollständiger Cache-Befüllung zeigt die App Offline-Bereitschaft. Danach funktionieren erneutes Öffnen, Turnierstart, Ergebniseingabe und Archiv ohne Heimserver oder LAN-Verbindung. Turnierdaten bleiben in IndexedDB auf dem Smartphone.
+
+Service Worker nur bei vorhandenem sicheren Kontext und Browserunterstützung aktivieren. Normale Browserbedienung bleibt auch bei fehlender Installationsmöglichkeit verfügbar, ohne falsche Offline-Zusage. Updates werden angeboten, ohne während einer Partie automatisch neu zu laden; Cache-Aktualisierung und Schema-Migrationen müssen vorhandene Daten erhalten. Ein fehlgeschlagenes Update ersetzt nicht die funktionierende Offline-Version.
 
 ## Abnahme und Prüfung
 
 - Alle vier Einstiegsrunden ergeben korrekte Team-, Match- und Platzierungszahlen; keine doppelten Teams und keine zweite Auslosung durch Doppeltippen.
 - Das Turnier lässt sich vom Start bis ins Archiv einschließlich kleinem Finale durchführen; Finale-Einstieg funktioniert ohne Platz-3-Spiel.
 - Satzregeln inklusive Verlängerung, 1/2/3 Satzsiegen, ungültiger Eingaben und Korrekturen sind fachlich getestet.
-- Fähigkeiten liegen im vorgesehenen Bereich, verwenden korrekte Seltenheitsgrenzen und gerundete Gesamtwerte; die definierte Verteilung wird anhand kontrollierter Zufallseingaben geprüft, ohne zufällig flackernde Tests.
+- Fähigkeiten liegen im vorgesehenen Bereich, verwenden korrekte Seltenheitsgrenzen und gerundete Gesamtwerte; Basisverteilung, normalisierte Ländergewichte und Rangfolge ihrer Erwartungswerte werden anhand kontrollierter Zufallseingaben geprüft, ohne zufällig flackernde Tests.
 - Neuladen erhält Spieler, Werte, Auslosungen, abgeschlossene Ergebnisse und gespeicherte Entwürfe. Archivierung erzeugt keine Duplikate.
-- Nach erstmaligem vollständigem Laden funktionieren Neustart, neuer Turnierstart, Weiterkommen und Archiv offline.
-- Manuelle Smartphone-Prüfung für Zahlentastatur, Fokus, Lesbarkeit, Touch-Flächen, Installation und schmale Ansichten; Desktop-Bedienung bleibt möglich.
+- Vollständiger Ablauf auf dem Smartphone über die feste HTTPS-LAN-Adresse mit vertrauenswürdigem Zertifikat ohne Warnung; Installation im unterstützten Browser prüfen. Nach vollständigem initialem Laden Offline-Neustart, neuer Turnierstart, Ergebniseingabe und Archiv bei nicht erreichbarem Heimserver prüfen. Daten bleiben beim Neuladen am selben Origin erhalten.
+- Manuelle Smartphone-Prüfung für Zahlentastatur, Fokus, Lesbarkeit, Touch-Flächen, HTTPS-LAN-Nutzung und schmale Ansichten; Desktop-Bedienung bleibt möglich.
 - Speicherfehler, Zweittab und Update-Hinweis führen nicht zu stillen Datenverlusten.
 
 ## Offene Entscheidungen und Zuständigkeit
 
-Keine zusätzliche Produktfrage blockiert dieses Design. Die oben als Autorenvorschlag markierten Details stehen bei der Designfreigabe zur Prüfung: technische Basis, Viertelfinale als Startstandard, Namensliste, konkrete Werteverteilung, ein aktives Turnier, Korrekturgrenzen und Zweittab-Verhalten. Die Umsetzung entscheidet Bibliotheksversionen, interne Dateistruktur, Porträtkomposition, Cache-/Sperrtechnik und Testwerkzeuge. Vor Umsetzung folgt nach Freigabe ein separater Implementierungsplan.
+Keine zusätzliche Produktfrage blockiert dieses Design. Die oben als Autorenvorschlag markierten Details stehen bei der Designfreigabe zur Prüfung: technische Basis, Viertelfinale als Startstandard, Namensliste, konkrete Werteverteilung und Länderfaktoren, Gleichbehandlung der nicht eingeordneten Länder, ein aktives Turnier, Korrekturgrenzen und Zweittab-Verhalten. Die Umsetzung entscheidet Bibliotheksversionen, interne Dateistruktur, Porträtkomposition, Cache-/Sperrtechnik und Testwerkzeuge. Vor Umsetzung folgt nach Freigabe ein separater Implementierungsplan.

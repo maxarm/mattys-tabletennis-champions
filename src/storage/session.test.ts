@@ -78,3 +78,83 @@ it('focus and visible events extend the actual lease; pagehide releases it', asy
   await waitFor(async () => expect(await repo.acquireSession('b')).toBe(true))
   await h.close(); repo.close()
 })
+
+function deferred() {
+  let resolve!: () => void
+  const promise = new Promise<void>(r => { resolve = r })
+  return { promise, resolve }
+}
+it('resumes from bfcache on pageshow without remount and restarts lease renewal after pagehide', async () => {
+  vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+  const repo = await openRepository({ name: 'session-bfcache' })
+  const states: SessionState[] = []
+  const h = await startSession(repo, state => states.push(state), 'a'); handles.push(h)
+  try {
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }))
+    await h.refresh() // Drain release; refresh itself is a no-op while paused.
+    expect(await repo.acquireSession('b')).toBe(true)
+    expect(states.at(-1)).toEqual({ status: 'readonly' })
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(await repo.acquireSession('b')).toBe(true) // A paused session must not reacquire.
+    await repo.releaseSession('b')
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+    await h.refresh()
+    expect(states.at(-1)).toEqual({ status: 'writable' })
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(await repo.acquireSession('b')).toBe(false) // Renewal is running again.
+    await h.close()
+    const length = states.length
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+    window.dispatchEvent(new Event('focus'))
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(await repo.acquireSession('b')).toBe(true)
+    expect(states).toHaveLength(length)
+  } finally { await h.close(); repo.close() }
+})
+it.each(['acquire', 'renew', 'release'] as const)('serializes bfcache release and resume around a delayed %s response', async phase => {
+  const repo = await openRepository({ name: `session-bfcache-delayed-${phase}` })
+  const states: SessionState[] = []
+  const entered = deferred(), gate = deferred()
+  if (phase === 'release') {
+    const original = repo.releaseSession.bind(repo)
+    vi.spyOn(repo, 'releaseSession').mockImplementationOnce(async id => {
+      entered.resolve()
+      await gate.promise
+      await original(id)
+    })
+  } else {
+    const method = phase === 'acquire' ? 'acquireSession' : 'renewSession'
+    const original = repo[method].bind(repo)
+    vi.spyOn(repo, method).mockImplementationOnce(async id => {
+      const value = await original(id)
+      entered.resolve()
+      await gate.promise
+      return value
+    })
+  }
+  const starting = startSession(repo, state => states.push(state), 'a')
+  let h: SessionHandle | undefined
+  let renewal: Promise<void> | undefined
+  try {
+    if (phase !== 'acquire') { h = await starting; handles.push(h) }
+    if (phase === 'renew') renewal = h!.refresh()
+    if (phase !== 'release') await entered.promise
+    window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }))
+    if (phase === 'release') await entered.promise
+    expect(states.at(-1)).toEqual({ status: 'readonly' })
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+    gate.resolve()
+    h = await starting
+    if (phase === 'acquire') handles.push(h)
+    await renewal
+    await h.refresh() // Drain the resume queue, including any delayed release.
+    expect(states.at(-1)).toEqual({ status: 'writable' })
+    expect(await repo.acquireSession('b')).toBe(false)
+  } finally {
+    gate.resolve()
+    h = await starting
+    await renewal
+    await h.close()
+    repo.close()
+  }
+})

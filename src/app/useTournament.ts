@@ -64,6 +64,10 @@ export function useTournament(repository: TournamentRepository, options: UseTour
       }
       const { tournamentId, revision, matchId, draft } = unacknowledged.current
       const saved = await repository.dispatch(tournamentId, revision, draft.operationId, { type: 'saveDraft', matchId, sets: draft.sets }, sessionId.current!)
+      // saveDraft advances exactly once. A dedup retry may return a newer snapshot
+      // written by another owner; never adopt that revision as the base for local text.
+      if (saved.revision !== revision + 1)
+        throw new StorageError('REVISION_CONFLICT', 'Das Turnier wurde in einem anderen Tab geändert. Ungespeicherte Eingaben bleiben sichtbar.')
       publish(saved)
       unacknowledged.current = undefined
       // A response for an older edit must never erase the latest visible text.

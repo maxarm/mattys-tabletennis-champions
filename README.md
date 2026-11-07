@@ -2,7 +2,7 @@
 
 Lokale deutschsprachige Begleitung echter Tischtennisspiele auf einem gemeinsamen Smartphone.
 
-## Entwicklung (Task 1)
+## Entwicklung
 
 Node.js wird manuell installiert. Geprüft mit Node **26.13.0** und npm **11.20.0**.
 Bei dieser lokalen Installation vor jedem Aufruf:
@@ -25,8 +25,19 @@ Der Entwicklungsserver lauscht auf `0.0.0.0:5173`, mit festem Port (kein automat
 | `npm run test:watch` | Vitest im Watch-Modus |
 | `npm run build` | Typecheck und statischer Build nach `dist/` |
 
-Aktuell enthält die App den Titel und den versionierten Katalog mit 23 Ländern, 69 festen Spielern und serialisierbaren Porträtdefinitionen. IDs (`de`, `de-1` usw.) bleiben bei künftigen Änderungen erhalten. Die Porträtdefinitionen sind fest ausgeschrieben; es gibt keine Zufallsquelle beim Laden oder Rendern. Die Länderfaktoren sind fiktive Spielbalance.
+## PWA und Browserprüfungen (Task 6)
 
-Die lokalen Flaggenpfade sind Katalogreferenzen; Flaggenassets und Porträtrenderer folgen in späteren Aufgaben. Speicherung, Turnierabläufe, HTTPS-Betrieb, Installation und Offline-Cache sind noch nicht implementiert. Es gibt derzeit keine Offline- oder Installationszusage. Der spätere HTTPS-LAN-Betrieb benötigt eine konstante Adresse und ein auf dem Smartphone vertrauenswürdiges Zertifikat mit passendem SAN. Ein Originwechsel übernimmt keine Browserdaten automatisch.
+Der aktuelle Stand enthält Turnierabläufe, Ergebniseingabe, Wiederaufnahme und Archiv in IndexedDB. Flaggen und SVG-Porträts werden lokal dargestellt.
 
-Testing Library, fake-indexeddb und Playwright sind für weitere Aufgaben vorbereitet; Browserabläufe und der statische HTTPS-LAN-Server erhalten ihre Skripte erst bei ihrer Implementierung. Buildausgaben, Abhängigkeiten, private Schlüssel, Zertifikate und lokale Umgebungsdateien werden nicht versioniert.
+`npm run build` erzeugt Manifest, lokale PNG-Icons und `dist/sw.js` mit Workbox-Precache. Service Worker laufen im Produktionsbuild, nicht im Vite-Entwicklungsserver. „Offline bereit“ erscheint erst nach vollständiger Prüfung des Pflichtcaches durch den tatsächlich kontrollierenden Worker. Installation wird bei angebotenem Browserdialog ermöglicht; Apple-Geräte erhalten einen bedingten manuellen Hinweis. Browserbedienung funktioniert ohne Installation.
+
+Updates werden nur angeboten. „Später“ lässt die laufende Ansicht unverändert. „Jetzt aktualisieren“ bleibt in der Matchansicht gesperrt und wartet außerhalb davon auf erfolgreiches `flush()` des einzigen Turnier-Hooks. Speicherfehler verhindern Aktivierung/Reload. Andere offene Tabs werden nicht automatisch neu geladen. Nach einem Reload kann die bestehende Schreibfreigabe bis zum Ablauf ihrer 15-Sekunden-Lease vorübergehend nur lesbar sein; die Sitzungsprüfung erwirbt sie erneut.
+
+```sh
+npm test -- src/pwa
+npm run test:e2e -- tests/e2e/offline.spec.ts tests/e2e/updates.spec.ts
+```
+
+Der E2E-Befehl baut zwei lokale Versionen in ignorierte `.superpowers/sdd/`-Verzeichnisse und startet ausschließlich für Tests einen HTTP-Server auf `127.0.0.1:8776`. Chromium muss bereits installiert sein; bei Sandboxbeschränkungen ist eine Freigabe für den Browserstart nötig. Die Tests prüfen Offline-Neustart, Turnier/Archiv, alle Flaggen, Cachefehler und manuelle Versionswechsel mit Datenbestand. Die Test-Build-Markierung wird ausschließlich vom Test-Buildskript eingefügt; der Produktcode enthält dafür keine Sonderfälle. Icons lassen sich mit `node scripts/render-icons.mjs` aus `public/icons/source.svg` lokal neu rendern.
+
+Für den späteren LAN-Server: den vollständigen Build gemeinsam unter `/` ausliefern, dieselbe Adresse und denselben Port behalten, `sw.js` als JavaScript ohne dauerhafte HTTP-Zwischenspeicherung sowie Manifest/Icons mit passenden MIME-Typen ausliefern. Neue Assets müssen vor dem neuen Worker erreichbar sein. Originwechsel übertragen keine IndexedDB-Daten. Ein Online-Erstaufruf mit vollständiger Cachebestätigung ist erforderlich. HTTPS mit auf dem Smartphone vertrauenswürdigem Zertifikat, echte Geräteinstallation und Offline-Neustart über die LAN-Adresse gehören weiterhin zu Task 7; localhost-Tests ersetzen diese Abnahme nicht.

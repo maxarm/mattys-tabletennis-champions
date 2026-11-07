@@ -799,3 +799,6 @@ nav button {
   .winner-banner .flag { width: 30px; }
   .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 }
+
+.pwa-panel { margin: 1rem auto; padding: 1rem; max-width: 68rem; background: var(--paper, #fff8e9); border-radius: 1rem; }
+.pwa-panel button { margin: .25rem; }

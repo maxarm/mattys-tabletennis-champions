@@ -11,6 +11,8 @@ import { ResultsScreen } from '../features/results/ResultsScreen';
 import { ArchiveScreen } from '../features/archive/ArchiveScreen';
 import { ArchiveDetail } from '../features/archive/ArchiveDetail';
 import { StatusMessage } from '../components/StatusMessage';
+import type { PwaController } from '../pwa/client';
+import { InstallHelp } from '../pwa/InstallHelp';
 import '../styles/tokens.css';
 import '../styles/global.css';
 export type Screen = {
@@ -28,8 +30,9 @@ export type Screen = {
     type: 'archiveDetail';
     tournamentId: string;
 };
-export function TournamentApp({ repository }: {
+export function TournamentApp({ repository, pwa }: {
     repository: TournamentRepository;
+    pwa?: PwaController;
 }) {
     const state = useTournament(repository);
     const [screen, setScreen] = useState<Screen>({ type: 'home' });
@@ -172,13 +175,15 @@ export function TournamentApp({ repository }: {
           <ArchiveDetail key={screen.tournamentId} repository={repository} tournamentId={screen.tournamentId} />
         </>}
       </main>
+      {pwa && <InstallHelp controller={pwa} blocked={disabled || screen.type === 'match'}
+        onUpdate={() => { if (screen.type !== 'match') void action(async () => { await state.flush(); await pwa.applyUpdate(); }); }} />}
       <footer className="app-footer">An der Platte entscheidet ihr. Die Zahlen sind nur Charakter.</footer>
     </>;
 
 }
 // Opening happens only in an effect. A cancelled StrictMode opening closes its
 // own handle before any hook mounts; the mounted hook retains a stable repository.
-export default function App() {
+export default function App({ pwa }: { pwa?: PwaController }) {
     const [repository, setRepository] = useState<TournamentRepository>();
     const [error, setError] = useState<string>();
     useEffect(() => {
@@ -217,5 +222,5 @@ export default function App() {
     }, []);
     if (error)
         return <main><h1>Matty’s Table Tennis Championships</h1><StatusMessage message={error} error/></main>;
-    return repository ? <TournamentApp repository={repository}/> : <main><h1>Matty’s Table Tennis Championships</h1><p>Dein Tischtennisturnier für zuhause.</p><StatusMessage message="Wird geladen"/></main>;
+    return repository ? <TournamentApp repository={repository} pwa={pwa}/> : <main><h1>Matty’s Table Tennis Championships</h1><p>Dein Tischtennisturnier für zuhause.</p><StatusMessage message="Wird geladen"/></main>;
 }

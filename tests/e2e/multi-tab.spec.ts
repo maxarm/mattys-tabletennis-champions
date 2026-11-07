@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { saved, snapshots } from './helpers'
 
-test('second tab stays read only, then resumes the same persisted draft after lease expiry', async ({ page, context, request }) => {
+test('readonly tab reloads a draft changed after it opened before editing after lease expiry', async ({ page, context, request }) => {
   await request.get('/__version?v=a')
   // Model an interrupted owner: suppress graceful pagehide lease release.
   await page.addInitScript(() => {
@@ -26,13 +26,18 @@ test('second tab stays read only, then resumes the same persisted draft after le
   await expect(second.getByText('Satz 1: 8 : 6')).toBeVisible()
   await expect(second.locator('input[inputmode="numeric"]')).toHaveCount(0)
   expect(await snapshots(second)).toEqual(before)
+  // B is already displaying the old snapshot when A changes its draft.
+  await page.locator('input[inputmode="numeric"]').nth(0).fill('10')
+  await page.locator('input[inputmode="numeric"]').nth(0).blur()
+  await saved(page)
+  const latest = await snapshots(page)
   await page.close()
   await second.getByRole('button', { name: '← Zur Runde' }).click()
   await expect(second.getByText('Ein anderer Tab bearbeitet das Turnier. Diese Ansicht ist nur lesbar.')).toHaveCount(0, { timeout: 22000 })
   await second.getByRole('button', { name: 'Spiel 1 öffnen', exact: true }).click()
-  await expect(second.locator('input[inputmode="numeric"]').nth(0)).toHaveValue('8')
+  await expect(second.locator('input[inputmode="numeric"]').nth(0)).toHaveValue('10')
   await expect(second.locator('input[inputmode="numeric"]').nth(1)).toHaveValue('6')
-  expect(await snapshots(second)).toEqual(before)
+  expect(await snapshots(second)).toEqual(latest)
   await second.locator('input[inputmode="numeric"]').nth(0).fill('9')
   await second.locator('input[inputmode="numeric"]').nth(0).blur()
   await saved(second)

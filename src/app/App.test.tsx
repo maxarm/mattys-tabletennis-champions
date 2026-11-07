@@ -69,3 +69,37 @@ it('opens under StrictMode and releases its repository after unmount', async () 
     await waitFor(async () => expect(await probe.acquireSession('after-unmount')).toBe(true));
     await probe.releaseSession('after-unmount');
 });
+it('preserves conflict inputs on cancel and explicitly reloads saved state before navigation', async () => {
+    const repo = await repository();
+    const t = createTournament({ entryRound: 'final', winsRequired: 1 }, context());
+    await repo.acquireSession('seed');
+    await repo.create(t, 'seed');
+    await repo.releaseSession('seed');
+    render(<TournamentApp repository={repo}/>);
+    const resume = await screen.findByRole('button', { name: 'Turnier fortsetzen' });
+    await waitFor(() => expect(resume).toBeEnabled());
+    fireEvent.click(resume);
+    fireEvent.click(await screen.findByRole('button', { name: 'Spiel 1 öffnen' }));
+    const inputs = await screen.findAllByRole('textbox');
+    // Advance the actual stored revision while this mounted editor keeps its snapshot.
+    const original = repo.dispatch.bind(repo);
+    vi.spyOn(repo, 'dispatch').mockImplementationOnce(async (...args) => {
+        await original(t.id, 0, 'foreign', { type: 'saveDraft', matchId: t.rounds[0].matches[0].id, sets: [['5', '3']] }, args[4]);
+        return original(...args);
+    });
+    fireEvent.change(inputs[0], { target: { value: '8' } });
+    fireEvent.blur(inputs[0]);
+    await screen.findByRole('alert');
+    fireEvent.click(screen.getByRole('button', { name: 'Gespeicherten Stand laden' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+    expect(inputs[0]).toHaveValue('8');
+    expect((await repo.loadActive())?.rounds[0].matches[0].draft).toEqual([['5', '3']]);
+    fireEvent.click(screen.getByRole('button', { name: 'Gespeicherten Stand laden' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Eingaben verwerfen und laden' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Turnier fortsetzen' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: 'Turnier fortsetzen' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Spiel 1 öffnen' }));
+    expect((await screen.findAllByRole('textbox'))[0]).toHaveValue('5');
+    fireEvent.click(screen.getByRole('button', { name: 'Archiv' }));
+    expect(await screen.findByRole('heading', { name: 'Eure Meisterschaften' })).toBeInTheDocument();
+});

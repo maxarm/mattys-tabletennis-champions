@@ -110,13 +110,18 @@ export function useTournament(repository: TournamentRepository, options: UseTour
     await repository.discardActive(t.id, t.revision, sessionId.current!)
     publish(undefined)
   }), [enqueue, savePending, repository, publish])
-  const reload = useCallback(() => enqueue(async () => {
+  const reload = useCallback((discardPending = false) => enqueue(async () => {
     // Reload never silently drops local text or rebases it over a different revision.
-    if (pending.current.size) throw new Error('Es gibt ungespeicherte Eingaben. Bitte zuerst erneut speichern.')
+    if (!discardPending && (pending.current.size || unacknowledged.current)) throw new Error('Es gibt ungespeicherte Eingaben. Bitte zuerst erneut speichern.')
     const [t, listed] = await Promise.all([repository.loadActive(), repository.listArchives()])
+    // Clear only after both reads succeed, and only with explicit consent.
+    if (timer.current) clearTimeout(timer.current)
+    pending.current.clear()
+    unacknowledged.current = undefined
+    publishDrafts()
     publish(t)
     if (live.current) setArchives(listed)
-  }), [enqueue, repository, publish])
+  }), [enqueue, repository, publish, publishDrafts])
 
   useEffect(() => {
     live.current = true
@@ -128,10 +133,45 @@ export function useTournament(repository: TournamentRepository, options: UseTour
         const id = options.sessionId ?? newSessionId()
         sessionId.current = id
         let sessionError: string | undefined
+        let owned = false
+        let generation = 0
         const handle = await startSession(repository, state => {
-          if (!cancelled) {
+          if (cancelled) return
+          const acquired = state.status === 'writable' && !owned
+          owned = state.status === 'writable'
+          if (state.status !== 'writable') {
+            generation++
             setSession(state.status)
             if (state.status === 'error') { sessionError = state.message; reportError(new Error(state.message)) }
+          } else if (acquired && ready.current) {
+            // Ownership alone does not make the previously loaded revision current.
+            const attempt = ++generation
+            setSession('loading')
+            const refresh = queue.current.then(async () => {
+              if (cancelled || attempt !== generation) return
+              // Retain the exact revision/operation lineage of uncertain local writes.
+              if (pending.current.size || unacknowledged.current) {
+                reportError(new StorageError('REVISION_CONFLICT', 'Die Schreibfreigabe wurde neu übernommen. Ungespeicherte Eingaben bleiben sichtbar. Bitte den gespeicherten Stand ausdrücklich laden.'))
+                setSession('writable')
+                return
+              }
+              try {
+                const [latest, listed] = await Promise.all([repository.loadActive(), repository.listArchives()])
+                if (cancelled || attempt !== generation) return
+                publish(latest)
+                setArchives(listed)
+                setStatus('saved')
+                setError(undefined)
+                setSession('writable')
+              } catch (reason) {
+                if (!cancelled && attempt === generation) {
+                  owned = false // A later renewal must retry the snapshot read.
+                  setSession('error')
+                  reportError(reason)
+                }
+              }
+            })
+            queue.current = refresh.catch(() => {})
           }
         }, id)
         if (cancelled) { await handle.close(); return }
@@ -141,8 +181,11 @@ export function useTournament(repository: TournamentRepository, options: UseTour
         publish(t)
         setArchives(listed)
         ready.current = true
+        if (owned) setSession('writable')
         if (!sessionError) setStatus('saved')
-      } catch (reason) { if (!cancelled) reportError(reason) }
+      } catch (reason) {
+        if (!cancelled) { setSession('error'); reportError(reason) }
+      }
     }
     const startup = lifecycle.current.then(initialize)
     lifecycle.current = startup

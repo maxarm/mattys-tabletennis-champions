@@ -12,7 +12,7 @@
 
 ## Umsetzungsstand
 
-Softwareaufgaben 1–7 umgesetzt und einzeln geprüft. 144 Tests, 14 Chromium-E2E-Tests, Typecheck, Lint, Build und isolierte Paketinstallation erfolgreich. Details: [Abnahme](../../acceptance.md). Echte Smartphone-/HTTPS-LAN-Abnahme bleibt dort ausdrücklich offen.
+Softwareaufgaben 1–7 umgesetzt und einzeln geprüft. 148 Tests, 14 Chromium-E2E-Tests, Typecheck, Lint, Build und isolierte Paketinstallation erfolgreich. Details: [Abnahme](../../acceptance.md). Echte Smartphone-/HTTPS-LAN-Abnahme bleibt dort ausdrücklich offen.
 
 | Aufgabe | Ergebnis-Commit |
 | --- | --- |
@@ -172,6 +172,12 @@ Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives T
 - [ ] Auf echtem Smartphone HTTPS ohne Zertifikatswarnung und `window.isSecureContext` prüfen. App installieren, Zahlentastatur/Fokus, 44-Pixel-Touchflächen, Baumscroll und Lesbarkeit testen. Nach Offline-Bereitschaft Heimserver stoppen bzw. Verbindung trennen, App schließen/erneut öffnen, Turnier spielen und Archiv ansehen. Desktop ebenfalls prüfen. Agenten-Browsertests ersetzen diese Hardwareprüfung nicht; falls kein Zugriff möglich, offene manuelle Punkte klar in `docs/acceptance.md` lassen, ohne sie als bestanden zu markieren.
 - [x] Abnahme dokumentieren und ausschließlich geprüfte Änderungen committen: `feat: support trusted LAN HTTPS and document acceptance`. Keine Veröffentlichung, kein Merge/Push ohne passenden Auftrag.
 
+
+## Finaler Review-Fix
+
+- [x] Lesender Tab lädt bei neuer Schreibfreigabe aktuellen Aktivstand und Archive vor Freigabe der Eingaben. Lokale Konflikt-Drafts behalten ihre ursprüngliche Revision und Operationshistorie.
+- [x] Bestätigtes „Gespeicherten Stand laden“ verwirft lokale Eingaben erst nach erfolgreichem Lesen; Abbrechen erhält sie. Navigation ist danach wieder möglich.
+- [x] Assertion-RED/GREEN für Hook/UI und echten stale takeover in Chromium; bestehende Lost-response-Regression bleibt erhalten. Details und Abschlussnachweise im ignorierten `final-fix-report.md`; aktuelle Zählungen in der Abnahme.
 
 ## Selbstprüfung und Übergabe
 

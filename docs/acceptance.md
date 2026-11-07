@@ -6,11 +6,13 @@ Stand 7. November 2026. Chromiumläufe ersetzen keine Abnahme auf iOS oder Andro
 
 | Bereich | Abdeckung | Ergebnis |
 | --- | --- | --- |
-| Fachlogik und Speicherung | Satzwertung, Medaillenrunde, Platzierungen, Revisionen, Tab-Lease, Wiederaufnahme und Archiv | 144/144 Vitest-Tests in 17 Dateien, einschließlich 2 HTTPS-Servertests |
-| Turnier im Browser | alle vier Einstiegsrunden bis zum Archiv; 1/2/3 Satzsiege; vollständige Snapshots nach Reload; Mehrfachklicks bei verzögerter Speicherbestätigung; zweiter Tab lesend und schreibende Übernahme nach Lease-Ablauf | 9/9 neue Chromium-E2E-Tests im fokussierten Lauf |
-| PWA | Cache, Offline-Neustart im Browserkontext, Turnier/Archiv, Updateablehnung/-annahme mit Build-Markierung, Cachefehler, unbekanntes Schema | 14/14 Chromium-E2E-Tests im Gesamtlauf bestanden (4,1 min), einschließlich der 9 neuen Task-7-Fälle |
+| Fachlogik und Speicherung | Satzwertung, Medaillenrunde, Platzierungen, Revisionen, Tab-Lease, Wiederaufnahme und Archiv | 148/148 Vitest-Tests in 17 Dateien, einschließlich 2 HTTPS-Servertests, Übernahme mit aktualisiertem Aktiv-/Archivstand und bestätigter Konflikterholung |
+| Turnier im Browser | alle vier Einstiegsrunden bis zum Archiv; 1/2/3 Satzsiege; vollständige Snapshots nach Reload; Mehrfachklicks bei verzögerter Speicherbestätigung; zweiter Tab liest vor einer fremden Änderung und lädt bei Übernahme nach Lease-Ablauf den aktuellen Draft vor dem Bearbeiten | 9/9 Turnier-/Tabfälle im finalen Gesamtlauf; geänderter Übernahmetest zusätzlich einzeln grün |
+| PWA | Cache, Offline-Neustart im Browserkontext, Turnier/Archiv, Updateablehnung/-annahme mit Build-Markierung, Cachefehler, unbekanntes Schema | 14/14 Chromium-E2E-Tests im finalen Gesamtlauf bestanden (4,0 min), einschließlich des korrigierten Übernahmefalls |
 | HTTPS-Server | Fehlkonfiguration, TLS mit temporärem Testzertifikat und explizitem Client-Trust, MIME, no-store, Traversal, Symlink-Ausbruch | Vitest; Testschlüssel temporär |
 | Smartphone-Installation | nicht automatisiert | offen |
+
+Finaler Review-Fix: Übernahme lädt den aktuellen Aktiv-/Archivstand vor Schreibfreigabe. Konflikteingaben bleiben bis zur ausdrücklichen Verwerfbestätigung erhalten; Abbrechen erhält den Text. Vier zusätzliche Hook-/UI-Tests, beobachtetes Assertion-RED/GREEN und echter Browser-Übernahmefall; bestehende Lost-response-Regressionen weiterhin grün.
 
 Prüfkommandos: `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e`. Ausgeführt mit Node 26.13.0 und npm 11.20.0: Typecheck, ESLint und Build erfolgreich. `npm ci --prefix <leeres temporäres Verzeichnis> --cache <temporärer Cache> --no-audit --no-fund --fetch-retries=0 --fetch-timeout=20000` installierte aus unverändertem `package.json` und `package-lock.json` erfolgreich 540 Pakete. Der erste Downloadversuch in der Netzwerksandbox scheiterte mit `EAI_AGAIN`; der autorisierte Lauf außerhalb der Sandbox gelang. Lockdatei und Abhängigkeiten wurden nicht verändert.
 

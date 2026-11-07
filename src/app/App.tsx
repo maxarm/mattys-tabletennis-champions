@@ -37,6 +37,7 @@ export function TournamentApp({ repository, pwa }: {
     const state = useTournament(repository);
     const [screen, setScreen] = useState<Screen>({ type: 'home' });
     const [navigationError, setNavigationError] = useState<string>();
+    const [confirmReload, setConfirmReload] = useState(false);
     const [busy, setBusy] = useState(false);
     const lock = useRef(false);
     const pendingCreation = useRef<ReturnType<typeof createTournament> | undefined>(undefined);
@@ -135,6 +136,20 @@ export function TournamentApp({ repository, pwa }: {
           <StatusMessage message={state.message} error={state.status === 'error'} />
           {state.session === 'readonly' && <StatusMessage message="Ein anderer Tab bearbeitet das Turnier. Diese Ansicht ist nur lesbar." />}
         </div>
+        {state.status === 'error' && <button disabled={disabled} onClick={() => setConfirmReload(true)}>Gespeicherten Stand laden</button>}
+        {confirmReload && <div className="confirmation" role="group" aria-label="Gespeicherten Stand laden bestätigen">
+          <p>Ungespeicherte Eingaben werden verworfen. Den gespeicherten Stand laden?</p>
+          <button disabled={disabled} onClick={() => void action(async () => {
+            await state.reload(true);
+            pendingCreation.current = undefined;
+            completionOperation.current = undefined;
+            archiveOperation.current = undefined;
+            drawOperation.current = undefined;
+            setConfirmReload(false);
+            setScreen({ type: 'home' });
+          })}>Eingaben verwerfen und laden</button>
+          <button disabled={busy} onClick={() => setConfirmReload(false)}>Abbrechen</button>
+        </div>}
         {navigationError && navigationError !== state.error && <StatusMessage message={navigationError} error />}
         {screen.type === 'home' && <HomeScreen
           tournament={t} busy={disabled} writable={writable} archiveCount={state.archives.length}

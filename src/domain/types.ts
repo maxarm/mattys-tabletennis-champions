@@ -93,3 +93,13 @@ export interface DomainError {
   readonly code: DomainErrorCode
   readonly message: string
 }
+
+export type DraftEvaluation =
+  | { readonly status: 'invalid'; readonly errors: readonly { readonly row: number; readonly message: string }[] }
+  | { readonly status: 'incomplete' }
+  | { readonly status: 'complete'; readonly sets: readonly SetScore[]; readonly setWins: readonly [number, number]; readonly winnerSide: 0 | 1 }
+
+export type TournamentCommand =
+  | { readonly type: 'saveDraft' | 'completeMatch'; readonly matchId: string; readonly sets: readonly DraftSet[] }
+  | { readonly type: 'drawNextRound'; readonly roundId: string }
+  | { readonly type: 'archive' }

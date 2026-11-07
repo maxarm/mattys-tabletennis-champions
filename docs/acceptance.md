@@ -10,7 +10,7 @@ Stand 7. November 2026. Chromiumläufe ersetzen keine Abnahme auf iOS oder Andro
 | Turnier im Browser | alle vier Einstiegsrunden bis zum Archiv; 1/2/3 Satzsiege; vollständige Snapshots nach Reload; Mehrfachklicks bei verzögerter Speicherbestätigung; zweiter Tab liest vor einer fremden Änderung und lädt bei Übernahme nach Lease-Ablauf den aktuellen Draft vor dem Bearbeiten | 9/9 Turnier-/Tabfälle im finalen Gesamtlauf; geänderter Übernahmetest zusätzlich einzeln grün |
 | PWA | Cache, Offline-Neustart im Browserkontext, Turnier/Archiv, Updateablehnung/-annahme mit Build-Markierung, Cachefehler, unbekanntes Schema | 14/14 Chromium-E2E-Tests im finalen Gesamtlauf bestanden (4,0 min), einschließlich des korrigierten Übernahmefalls |
 | HTTPS-Server | Fehlkonfiguration, TLS mit temporärem Testzertifikat und explizitem Client-Trust, MIME, no-store, Traversal, Symlink-Ausbruch | Vitest; Testschlüssel temporär |
-| Smartphone-Installation | nicht automatisiert | offen |
+| Smartphone-Abnahme | manuell durch den Nutzer | Gesamt-Abnahme bestätigt; keine einzelnen Geräte-/Installationsdetails protokolliert |
 
 Finaler Review-Fix: Übernahme lädt den aktuellen Aktiv-/Archivstand vor Schreibfreigabe. Konflikteingaben bleiben bis zur ausdrücklichen Verwerfbestätigung erhalten; Abbrechen erhält den Text. Vier zusätzliche Hook-/UI-Tests, beobachtetes Assertion-RED/GREEN und echter Browser-Übernahmefall; bestehende Lost-response-Regressionen weiterhin grün.
 
@@ -20,22 +20,22 @@ OpenSSL erzeugte nur kurzlebige Testzertifikate; HTTPS wurde mit explizit überg
 
 Bekannte nicht blockierende Werkzeugmeldungen: veraltete transitive glob-/ESLint-Versionen, npm-Hinweis zum esbuild-Installationsskript, von Rollup entfernte Zod-PURE-Kommentare und NO_COLOR/FORCE_COLOR-Konflikt im Browser-Teststarter. Keine Runtime oder Browser wurden automatisch installiert.
 
-## Manuelle Abnahme auf echtem Smartphone – offen
+## Manuelle Abnahme auf echtem Smartphone – vom Nutzer bestätigt
 
-Erst nach Zertifikatseinrichtung gemäß [LAN-Anleitung](lan-setup.md) durchführen. Datum, Gerätemodell, OS, Browser und Origin ergänzen. Diese Vorlage behauptet nicht, dass die Prüfungen stattfanden.
+Der Nutzer hat die Prüfung am Smartphone mit „geprüft – passt“ bestätigt. Die Gesamt-Abnahme ist damit erteilt. Gerätemodell, OS, Browser, Origin und einzelne Messungen wurden nicht mitgeteilt; die folgenden Schritte sind deshalb nicht als separat beobachtete Agentenprüfungen zu verstehen. Zertifikatseinrichtung: [LAN-Anleitung](lan-setup.md).
 
 | Prüfschritt | Ergebnis |
 | --- | --- |
-| HTTPS-LAN-Adresse ohne Zertifikatswarnung geöffnet | offen |
-| `window.isSecureContext === true` und Service Worker aktiv | offen |
-| Auf iOS „Zum Home-Bildschirm“ bzw. angebotenen Android-Installationsdialog geprüft; App auch ohne Installation im Browser bedient | offen |
-| Zahlenfeld antippen: native Zahlentastatur, Fokus, direkte Eingabe und sichtbarer Speicherstatus; gespeicherten Entwurf nach Neustart prüfen | offen |
-| Touchziele mindestens ca. 44 × 44 CSS-Pixel; Lesbarkeit/Kontrast; kein Seitenüberlauf, ausschließlich Baum horizontal scrollbar | offen |
-| Offlinebereitschaft angezeigt, Server/Netz getrennt, App geschlossen und neu geöffnet | offen |
-| Nach vollständigem Schließen ohne Server/Netz offline neu starten; Turnier fortsetzen, Partie abschließen und Archiv öffnen | offen |
-| Desktop-Browser an derselben LAN-Adresse geprüft | offen |
+| HTTPS-LAN-Adresse ohne Zertifikatswarnung geöffnet | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| `window.isSecureContext === true` und Service Worker aktiv | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| Auf iOS „Zum Home-Bildschirm“ bzw. angebotenen Android-Installationsdialog geprüft; App auch ohne Installation im Browser bedient | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| Zahlenfeld antippen: native Zahlentastatur, Fokus, direkte Eingabe und sichtbarer Speicherstatus; gespeicherten Entwurf nach Neustart prüfen | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| Touchziele mindestens ca. 44 × 44 CSS-Pixel; Lesbarkeit/Kontrast; kein Seitenüberlauf, ausschließlich Baum horizontal scrollbar | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| Offlinebereitschaft angezeigt, Server/Netz getrennt, App geschlossen und neu geöffnet | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| Nach vollständigem Schließen ohne Server/Netz offline neu starten; Turnier fortsetzen, Partie abschließen und Archiv öffnen | Durch Gesamt-Abnahme bestätigt; kein Einzelprotokoll |
+| Desktop-Browser an derselben LAN-Adresse geprüft | Nicht separat vom Nutzer berichtet |
 
-Abnahmeprotokoll: Gerät ______ · OS ______ · Browser ______ · Datum ______ · Origin ______
+Nachweis: Bestätigung des Nutzers im Projektgespräch; Geräte- und Einzelprüfungsdaten nicht erfasst.
 
 ## Verschieben des Projektordners
 
@@ -43,4 +43,4 @@ Die Startbefehle und Standard-Zertifikatspfade sind relativ zum aktuellen Projek
 
 ## Abschlussreview
 
-Alle sieben Softwareaufgaben wurden unabhängig geprüft. Das abschließende Review des gesamten Branches fand einen Mehrtab-Übernahmefehler; dieser wurde mit Regressionstests korrigiert und im gezielten Re-Review freigegeben (`0f205ee`). Keine offenen blockierenden Softwarebefunde; die manuelle Geräteabnahme oben bleibt offen.
+Alle sieben Softwareaufgaben wurden unabhängig geprüft. Das abschließende Review des gesamten Branches fand einen Mehrtab-Übernahmefehler; dieser wurde mit Regressionstests korrigiert und im gezielten Re-Review freigegeben (`0f205ee`). Keine offenen blockierenden Softwarebefunde; die Smartphone-Gesamt-Abnahme wurde anschließend vom Nutzer bestätigt.

@@ -12,7 +12,7 @@
 
 ## Umsetzungsstand
 
-Softwareaufgaben 1–7 umgesetzt und einzeln geprüft. 148 Tests, 14 Chromium-E2E-Tests, Typecheck, Lint, Build und isolierte Paketinstallation erfolgreich. Details: [Abnahme](../../acceptance.md). Echte Smartphone-/HTTPS-LAN-Abnahme bleibt dort ausdrücklich offen.
+Softwareaufgaben 1–7 umgesetzt und einzeln geprüft. 148 Tests, 14 Chromium-E2E-Tests, Typecheck, Lint, Build und isolierte Paketinstallation erfolgreich. Details: [Abnahme](../../acceptance.md). Die Smartphone-Gesamt-Abnahme wurde vom Nutzer bestätigt; Details und nicht separat berichtete Prüfungen stehen im Abnahmeprotokoll.
 
 | Aufgabe | Ergebnis-Commit |
 | --- | --- |
@@ -33,7 +33,7 @@ Softwareaufgaben 1–7 umgesetzt und einzeln geprüft. 148 Tests, 14 Chromium-E2
 - Ein aktives Turnier, Archive nur lesbar; keine Export-/Import- oder Löschfunktion für Archive.
 - Alle Assets lokal; auch England erhält eine eigene lokale Flagge. Private Schlüssel und Zertifikatsdateien nicht versionieren.
 - Installations-/Offline-Bereitschaft nur nach nachgewiesener Browserfähigkeit beziehungsweise vollständigem Cache anzeigen.
-- Ausführung vom Nutzer freigegeben: frischer Implementierungs-Subagent je Aufgabe mit separatem Aufgabenreview. Tatsächliche Smartphone-Abnahme bleibt manuell offen.
+- Ausführung vom Nutzer freigegeben: frischer Implementierungs-Subagent je Aufgabe mit separatem Aufgabenreview. Smartphone-Abnahme manuell vom Nutzer bestätigt.
 
 ## Review Focus
 
@@ -169,7 +169,7 @@ Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives T
 - [x] HTTPS-Anleitung erstellen: feste LAN-Adresse/Name, lokale CA etwa mit mkcert (manuell zu installierendes Zusatzwerkzeug, keine automatische Systemänderung), Zertifikat mit passendem IP-/DNS-SAN, Ablage unter `.certs/`, nur öffentliches CA-Zertifikat zum Telefon übertragen, dort installieren und Vertrauen aktivieren. Separate iOS-/Android-Hinweise anhand offizieller aktueller Dokumentation bei Umsetzung verifizieren. Kein privater CA-Schlüssel aufs Smartphone, keine Router-Portfreigabe. Startbefehle und Origin-Bindung erklären.
 - [x] E2E-Prüfungen schreiben: alle Einstiegsrunden vom Start bis Archiv; 1/2/3 Satzsiege über Testmatrix; mehrfacher Klick während künstlich langsamer Speicherung; zweiter Tab lesend und Übernahme nach Lease-Ablauf; Neustart erhält Namen, Werte, Auslosungen und Entwürfe. Vor Produktanpassungen fehlschlagende Fälle beobachten.
 - [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e` ausführen; Ergebnisse dokumentieren, Fehler beheben und nur betroffene Prüfungen wiederholen, sofern der Fehler keine breitere Wirkung hat.
-- [ ] Auf echtem Smartphone HTTPS ohne Zertifikatswarnung und `window.isSecureContext` prüfen. App installieren, Zahlentastatur/Fokus, 44-Pixel-Touchflächen, Baumscroll und Lesbarkeit testen. Nach Offline-Bereitschaft Heimserver stoppen bzw. Verbindung trennen, App schließen/erneut öffnen, Turnier spielen und Archiv ansehen. Desktop ebenfalls prüfen. Agenten-Browsertests ersetzen diese Hardwareprüfung nicht; falls kein Zugriff möglich, offene manuelle Punkte klar in `docs/acceptance.md` lassen, ohne sie als bestanden zu markieren.
+- [x] Smartphone-Gesamt-Abnahme durch den Nutzer bestätigt („geprüft – passt“). Einzelmessungen und Gerätedaten wurden nicht protokolliert; ein zusätzlicher Desktop-Test an der LAN-Adresse wurde nicht separat berichtet. Siehe `docs/acceptance.md`; keine Hardwareprüfung durch den Agenten behauptet.
 - [x] Abnahme dokumentieren und ausschließlich geprüfte Änderungen committen: `feat: support trusted LAN HTTPS and document acceptance`. Keine Veröffentlichung, kein Merge/Push ohne passenden Auftrag.
 
 

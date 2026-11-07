@@ -39,4 +39,8 @@ Abnahmeprotokoll: Gerät ______ · OS ______ · Browser ______ · Datum ______ �
 
 ## Verschieben des Projektordners
 
-Die Startbefehle und Standard-Zertifikatspfade sind relativ zum aktuellen Projektverzeichnis. Für die geplante Umbenennung in `mattys-tabletennis-champions` sind keine versionierten absoluten Projektpfade anzupassen. Neue Shell/Editor-Sitzung im verschobenen Ordner öffnen; gegebenenfalls externe Startverknüpfungen und absolut gesetzte `LAN_TLS_CERT`-/`LAN_TLS_KEY`-Variablen anpassen. Der Browser-Origin muss unverändert bleiben, damit die gespeicherten Turniere erreichbar bleiben.
+Die Startbefehle und Standard-Zertifikatspfade sind relativ zum aktuellen Projektverzeichnis. Der Projektordner heißt `mattys-tabletennis-champions`; die Umbenennung erfordert keine Anpassung versionierter absoluter Projektpfade. Neue Shell/Editor-Sitzung im verschobenen Ordner öffnen; gegebenenfalls externe Startverknüpfungen und absolut gesetzte `LAN_TLS_CERT`-/`LAN_TLS_KEY`-Variablen anpassen. Der Browser-Origin muss unverändert bleiben, damit die gespeicherten Turniere erreichbar bleiben.
+
+## Abschlussreview
+
+Alle sieben Softwareaufgaben wurden unabhängig geprüft. Das abschließende Review des gesamten Branches fand einen Mehrtab-Übernahmefehler; dieser wurde mit Regressionstests korrigiert und im gezielten Re-Review freigegeben (`0f205ee`). Keine offenen blockierenden Softwarebefunde; die manuelle Geräteabnahme oben bleibt offen.

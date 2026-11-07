@@ -10,6 +10,20 @@
 
 **Spec:** [Freigegebenes Design](../specs/2026-11-07-mattys-table-tennis-design.md). Zusätzlich vor jeder Umsetzung `AGENTS.md` lesen.
 
+## Umsetzungsstand
+
+Softwareaufgaben 1–7 umgesetzt und einzeln geprüft. 144 Tests, 14 Chromium-E2E-Tests, Typecheck, Lint, Build und isolierte Paketinstallation erfolgreich. Details: [Abnahme](../../acceptance.md). Echte Smartphone-/HTTPS-LAN-Abnahme bleibt dort ausdrücklich offen.
+
+| Aufgabe | Ergebnis-Commit |
+| --- | --- |
+| 1 · Basis und Katalog | `ddc07f8` |
+| 2 · Fähigkeiten und Turnierlogik | `665150e` |
+| 3 · Speicherung und Tabs einschließlich Reviewkorrekturen | `178ef78` |
+| 4 · Oberfläche und Charakterkarten | `dd54017` |
+| 5 · Ergebnisse und Archiv einschließlich Reviewkorrektur | `c699f59` |
+| 6 · PWA und Offline | `610ab98` |
+| 7 · HTTPS und automatisierte Abnahme | `3a18a1c` |
+
 ## Global Constraints
 
 - Sprache der Oberfläche: Deutsch. Ein gemeinsames Smartphone, keine festen Zuordnungen zu den beiden echten Menschen.
@@ -19,7 +33,7 @@
 - Ein aktives Turnier, Archive nur lesbar; keine Export-/Import- oder Löschfunktion für Archive.
 - Alle Assets lokal; auch England erhält eine eigene lokale Flagge. Private Schlüssel und Zertifikatsdateien nicht versionieren.
 - Installations-/Offline-Bereitschaft nur nach nachgewiesener Browserfähigkeit beziehungsweise vollständigem Cache anzeigen.
-- Keine Produktimplementierung im Rahmen dieses Plans. Vor Ausführung Plan durchsehen und Ausführungsmethode festlegen.
+- Ausführung vom Nutzer freigegeben: frischer Implementierungs-Subagent je Aufgabe mit separatem Aufgabenreview. Tatsächliche Smartphone-Abnahme bleibt manuell offen.
 
 ## Review Focus
 
@@ -68,11 +82,12 @@ Gemeinsame Typentscheidungen für die Aufgaben:
 
 **Schnittstellen:** Exportiert gemeinsame Typen, `COUNTRIES: readonly Country[]`, `PLAYERS: readonly Player[]`, `CATALOG_VERSION` und `PortraitDefinition`. `Country` besitzt ID, deutschen Namen, lokalen Flaggenpfad und Stärke-Faktor; `Player` stabile ID, Länder-ID, Namen und feste Porträtdefinition.
 
-- [ ] Node/npm mit `command -v node`, `node --version`, `command -v npm`, `npm --version` prüfen. Bei Pfadproblemen die vorhandene Installation suchen und passend einbinden; keine neue Runtime installieren. Bleibt sie unzugänglich, Ursache konkret melden und diesen Ausführungsblock offen lassen.
-- [ ] React-/Vite-/TypeScript-Projekt mit striktem Typecheck und den genannten Testwerkzeugen einrichten. Skripte: `dev`, `typecheck`, `lint`, `test` (Vitest run), `test:watch`, `build` (Typecheck + Vite), später `test:e2e` und `serve:lan`. Nur tatsächlich angelegte Skripte dokumentieren. `node_modules/`, `dist/`, Testreports, `.certs/`, `.env.local` und Schlüsseldateien ignorieren.
-- [ ] `catalog.test.ts` schreiben: exakt 23 eindeutige Länder und 69 eindeutige Spieler; je Land drei Einträge in Designreihenfolge; sieben Pflichtnamen wortgleich; dritter Name entspricht der Designtabelle; jede Identität hat eine stabile Porträtdefinition. `npm test -- src/domain/catalog.test.ts` muss vor Anlegen der Exporte scheitern.
-- [ ] Typen und den vollständigen Designkatalog implementieren; Faktoren 2/1,8/1,6/1,45/1,3/1,15 für China/Japan/Deutschland/Frankreich/Österreich/Kroatien, sonst 1. Porträts mit festen, unterschiedlichen Definitionen ohne Zufall beim Rendern vorbereiten.
-- [ ] `npm test -- src/domain/catalog.test.ts`, `npm run typecheck`, `npm run lint`, `npm run build` ausführen; alle erfolgreich. Minimale App zeigt den deutschen Titel. Nur nach geprüfter Ausgabe committen: `chore: bootstrap app and fixed player catalog`.
+- [x] Node/npm mit `command -v node`, `node --version`, `command -v npm`, `npm --version` prüfen. Bei Pfadproblemen die vorhandene Installation suchen und passend einbinden; keine neue Runtime installieren. Bleibt sie unzugänglich, Ursache konkret melden und diesen Ausführungsblock offen lassen.
+- [x] React-/Vite-/TypeScript-Projekt mit striktem Typecheck und den genannten Testwerkzeugen einrichten. Skripte: `dev`, `typecheck`, `lint`, `test` (Vitest run), `test:watch`, `build` (Typecheck + Vite), später `test:e2e` und `serve:lan`. Nur tatsächlich angelegte Skripte dokumentieren. `node_modules/`, `dist/`, Testreports, `.certs/`, `.env.local` und Schlüsseldateien ignorieren.
+- [x] `catalog.test.ts` schreiben: exakt 23 eindeutige Länder und 69 eindeutige Spieler; je Land drei Einträge in Designreihenfolge; sieben Pflichtnamen wortgleich; dritter Name entspricht der Designtabelle; jede Identität hat eine stabile Porträtdefinition. `npm test -- src/domain/catalog.test.ts` muss vor Anlegen der Exporte scheitern.
+- [x] Typen und den vollständigen Designkatalog implementieren; Faktoren 2/1,8/1,6/1,45/1,3/1,15 für China/Japan/Deutschland/Frankreich/Österreich/Kroatien, sonst 1. Porträts mit festen, unterschiedlichen Definitionen ohne Zufall beim Rendern vorbereiten.
+- [x] `npm test -- src/domain/catalog.test.ts`, `npm run typecheck`, `npm run lint`, `npm run build` ausführen; alle erfolgreich. Minimale App zeigt den deutschen Titel. Nur nach geprüfter Ausgabe committen: `chore: bootstrap app and fixed player catalog`.
+
 
 ## Aufgabe 2: Fähigkeiten, Satzwertung und vollständiger Turniermotor
 
@@ -82,12 +97,13 @@ Gemeinsame Typentscheidungen für die Aufgaben:
 
 `DraftEvaluation` ist `invalid` (Zeilenfehler), `incomplete` oder `complete` (gültige Sätze, Satzstand, Gewinnerseite). `TournamentCommand` ist eine Union aus `saveDraft(matchId, sets)`, `completeMatch(matchId, sets)`, `drawNextRound(roundId)` und `archive`; tatsächliche Felder als Objekte mit `type` modellieren. `roundId` bezeichnet ausdrücklich die abzuschließende Runde und verhindert erneutes Auslosen bereits verarbeiteter Runden. Verwerfen erledigt später das Repository.
 
-- [ ] Deterministische Tests für Intervallgrenzen, 85/89/90/94/95/100 und gerundeten Mittelwert schreiben. Basisgewichte `[1,8,66,13,8,3,0.8,0.2]` auf Bereiche `[1,49],[50,69],[70,84],[85,89],[90,94],[95,97],[98,99],[100,100]`; ab 85 Faktoren anwenden und normalisieren. Tests prüfen Erwartungswertrangfolge und China-Wahrscheinlichkeiten 19,2 % ab 90 / 6,4 % mythisch analytisch, ohne Stichprobenschwankungen.
-- [ ] Satz-/Draft-Tests schreiben: 11:0, 11:9, 12:10, 15:13 gültig; 11:10, 12:8, negative, dezimale und nicht numerische Eingaben ungültig. Leere Strings bleiben unvollständig, nicht 0. Spiegelbilder und Siege auf beiden Seiten prüfen. Für 1/2/3 Siege Matchende nach maximal 1/3/5 Sätzen; nach Änderung früherer Sätze keine überzähligen Sätze oder veralteten Siege. Zahlen außerhalb sicherer JS-Ganzzahlen als nicht darstellbare Eingabe ablehnen, ohne sportliche Obergrenze einzuführen.
-- [ ] Parametrisierte Turniertests für alle Einstiege schreiben: 16/8/4/2 Teilnehmer und 16/8/4/1 Gesamtmatches. Keine doppelten Länder, alle drei Spieler erreichbar, Zustand beim Rendern unverändert. Mit kontrollierter Zufallsfolge demonstrieren, dass Neuauslosung echte neue Paarungen zulässt und keine Setzliste benutzt.
-- [ ] Übergangstests schreiben: Auslosen vor vollständiger Runde abweisen; nach Halbfinale finale + bronze erzeugen; beide Reihenfolgen der Abschlussmatches zulassen; nur bei allen erforderlichen Ergebnissen `finished`. Plätze 1–4 sowie geteilte 5/9 korrekt. Wiederholte Auslosung derselben Runde und wiederholte Archivierung idempotent. Korrektur nur vor nächster Auslosung beziehungsweise Archivierung; vorübergehend unvollständige Korrektur darf ein fertiges Turnier wieder spielbar machen.
-- [ ] `npm test -- src/domain` ausführen und erwartetes Scheitern der neuen Tests beobachten; dann Funktionen implementieren. Fisher-Yates für Auswahl/Paarung, injizierte IDs/Zeit, Snapshots bei Erstellung. Dieselbe Fehler-/Korrekturlogik für Draft und Abschluss verwenden; beim Speichern eines korrigierten abgeschlossenen Matches altes Ergebnis entfernen, bis neu abgeschlossen wird.
-- [ ] `npm test -- src/domain`, `npm run typecheck` ausführen; erfolgreich committen: `feat: implement ratings scoring and tournament rules`.
+- [x] Deterministische Tests für Intervallgrenzen, 85/89/90/94/95/100 und gerundeten Mittelwert schreiben. Basisgewichte `[1,8,66,13,8,3,0.8,0.2]` auf Bereiche `[1,49],[50,69],[70,84],[85,89],[90,94],[95,97],[98,99],[100,100]`; ab 85 Faktoren anwenden und normalisieren. Tests prüfen Erwartungswertrangfolge und China-Wahrscheinlichkeiten 19,2 % ab 90 / 6,4 % mythisch analytisch, ohne Stichprobenschwankungen.
+- [x] Satz-/Draft-Tests schreiben: 11:0, 11:9, 12:10, 15:13 gültig; 11:10, 12:8, negative, dezimale und nicht numerische Eingaben ungültig. Leere Strings bleiben unvollständig, nicht 0. Spiegelbilder und Siege auf beiden Seiten prüfen. Für 1/2/3 Siege Matchende nach maximal 1/3/5 Sätzen; nach Änderung früherer Sätze keine überzähligen Sätze oder veralteten Siege. Zahlen außerhalb sicherer JS-Ganzzahlen als nicht darstellbare Eingabe ablehnen, ohne sportliche Obergrenze einzuführen.
+- [x] Parametrisierte Turniertests für alle Einstiege schreiben: 16/8/4/2 Teilnehmer und 16/8/4/1 Gesamtmatches. Keine doppelten Länder, alle drei Spieler erreichbar, Zustand beim Rendern unverändert. Mit kontrollierter Zufallsfolge demonstrieren, dass Neuauslosung echte neue Paarungen zulässt und keine Setzliste benutzt.
+- [x] Übergangstests schreiben: Auslosen vor vollständiger Runde abweisen; nach Halbfinale finale + bronze erzeugen; beide Reihenfolgen der Abschlussmatches zulassen; nur bei allen erforderlichen Ergebnissen `finished`. Plätze 1–4 sowie geteilte 5/9 korrekt. Wiederholte Auslosung derselben Runde und wiederholte Archivierung idempotent. Korrektur nur vor nächster Auslosung beziehungsweise Archivierung; vorübergehend unvollständige Korrektur darf ein fertiges Turnier wieder spielbar machen.
+- [x] `npm test -- src/domain` ausführen und erwartetes Scheitern der neuen Tests beobachten; dann Funktionen implementieren. Fisher-Yates für Auswahl/Paarung, injizierte IDs/Zeit, Snapshots bei Erstellung. Dieselbe Fehler-/Korrekturlogik für Draft und Abschluss verwenden; beim Speichern eines korrigierten abgeschlossenen Matches altes Ergebnis entfernen, bis neu abgeschlossen wird.
+- [x] `npm test -- src/domain`, `npm run typecheck` ausführen; erfolgreich committen: `feat: implement ratings scoring and tournament rules`.
+
 
 ## Aufgabe 3: Transaktionale Speicherung und Tab-Eigentum
 
@@ -97,12 +113,13 @@ Gemeinsame Typentscheidungen für die Aufgaben:
 
 Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives Turnier und globale Schreib-Lease) und `operations` (Operation-ID + Turnier-ID). Alle Übergänge inklusive Revision, aktivem Verweis, Archivstatus und Deduplizierung erfolgen in derselben readwrite-Transaktion. Nach bereits gespeicherter Operation wird der aktuelle Snapshot zurückgegeben, ohne dieselbe Aktion erneut anzuwenden. Fachbefehl und IDs/Zeit werden vor beziehungsweise synchron innerhalb der Transaktion erzeugt, niemals auf Netzwerk warten.
 
-- [ ] fake-indexeddb-Tests schreiben: laufendes Turnier und Draft nach erneutem Öffnen identisch; Archiv behält damaligen Katalog/Porträts; Revisionenkonflikt überschreibt nichts; wiederholte Operation-ID erzeugt keine zweite Runde/Archivzeile. Fehler beim Commit lässt zuvor gespeicherte Daten unverändert.
-- [ ] Schemafälle prüfen: unbekannte Version, ungültiger Status, fehlende Teilnehmerreferenz, falsche Ratings/Satzwertung und widersprüchliche Platzierung melden Fehler ohne Löschung. Für Schema 1 eine versionierte Migrationsfunktion anlegen; spätere Versionen werden bis zur passenden Migration abgewiesen. Archive werden nicht bei jedem Öffnen mit dem aktuellen Katalog neu aufgebaut.
-- [ ] Lease-Tests mit injizierter Uhr: 15 Sekunden Laufzeit, Erneuerung alle 5 Sekunden; zweiter Tab bleibt lesend. Nach Ablauf darf er übernehmen, der alte Tab verliert Schreibrechte auch bei noch offener UI. Erneuerung bei visibilitychange/focus, Freigabe beim geordneten Schließen nur best effort. ID-Fallback mit `crypto.getRandomValues`, wenn `randomUUID` fehlt; keine Abhängigkeit von Web Locks.
-- [ ] Tests zuerst ausführen (`npm test -- src/storage src/app/useTournament.test.tsx`), Scheitern prüfen, dann Schema, Repository, Session und Hook implementieren. Hook serialisiert Eingaben, speichert Draft nach 250 ms und bei blur, wartet vor Navigation/Abschluss auf ausstehende Speicherung und zeigt „Wird gespeichert“, Fehler oder gespeicherten Zustand. Ältere Antworten dürfen neuere Texte nicht ersetzen; überlappende Autosaves mit Test absichern.
-- [ ] Wiederaufnahme eines fertigen, noch nicht archivierten Turniers und Verwerfen nur des aktiven Turniers testen. Speicherfehler und Lease-Verlust halten Eingaben sichtbar, statt Erfolg zu melden.
-- [ ] Genannte Tests sowie Typecheck erfolgreich ausführen; committen: `feat: persist tournaments and protect concurrent edits`.
+- [x] fake-indexeddb-Tests schreiben: laufendes Turnier und Draft nach erneutem Öffnen identisch; Archiv behält damaligen Katalog/Porträts; Revisionenkonflikt überschreibt nichts; wiederholte Operation-ID erzeugt keine zweite Runde/Archivzeile. Fehler beim Commit lässt zuvor gespeicherte Daten unverändert.
+- [x] Schemafälle prüfen: unbekannte Version, ungültiger Status, fehlende Teilnehmerreferenz, falsche Ratings/Satzwertung und widersprüchliche Platzierung melden Fehler ohne Löschung. Für Schema 1 eine versionierte Migrationsfunktion anlegen; spätere Versionen werden bis zur passenden Migration abgewiesen. Archive werden nicht bei jedem Öffnen mit dem aktuellen Katalog neu aufgebaut.
+- [x] Lease-Tests mit injizierter Uhr: 15 Sekunden Laufzeit, Erneuerung alle 5 Sekunden; zweiter Tab bleibt lesend. Nach Ablauf darf er übernehmen, der alte Tab verliert Schreibrechte auch bei noch offener UI. Erneuerung bei visibilitychange/focus, Freigabe beim geordneten Schließen nur best effort. ID-Fallback mit `crypto.getRandomValues`, wenn `randomUUID` fehlt; keine Abhängigkeit von Web Locks.
+- [x] Tests zuerst ausführen (`npm test -- src/storage src/app/useTournament.test.tsx`), Scheitern prüfen, dann Schema, Repository, Session und Hook implementieren. Hook serialisiert Eingaben, speichert Draft nach 250 ms und bei blur, wartet vor Navigation/Abschluss auf ausstehende Speicherung und zeigt „Wird gespeichert“, Fehler oder gespeicherten Zustand. Ältere Antworten dürfen neuere Texte nicht ersetzen; überlappende Autosaves mit Test absichern.
+- [x] Wiederaufnahme eines fertigen, noch nicht archivierten Turniers und Verwerfen nur des aktiven Turniers testen. Speicherfehler und Lease-Verlust halten Eingaben sichtbar, statt Erfolg zu melden.
+- [x] Genannte Tests sowie Typecheck erfolgreich ausführen; committen: `feat: persist tournaments and protect concurrent edits`.
+
 
 ## Aufgabe 4: Hauptbildschirm, Runden, Turnierbaum und Charakterkarten
 
@@ -110,10 +127,11 @@ Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives T
 
 **Schnittstellen:** `App` navigiert intern über eine diskriminierte `Screen`-Union (home, round, match, results, archive, archiveDetail). Keine zusätzlichen URL-Routen nötig. Ansichten konsumieren persistierte Snapshots und Callback-Promises aus `useTournament`; sie verändern keine Fachzustände selbst. `Portrait({definition})`, `Flag({countryName,src})`, `PlayerCard({participant})` rendern Snapshot-Inhalte.
 
-- [ ] Komponententests schreiben: Standard Viertelfinale/1; Anzahl 8 Teams/8 Matches; neue Meisterschaft per einmaliger Aktion; aktives Turnier zeigt Fortsetzen und bestätigtes Verwerfen. Speicherfehler navigiert nicht. Rundenbutton nur nach vollständiger Runde; abgeschlossene Partien öffnen; künftige Paarungen sind nicht erfunden.
-- [ ] Tests scheitern lassen, dann Grundlayout im bestätigten Stil implementieren. Flaggen vollständig lokal erstellen, alle 69 Köpfe anhand fester Definitionen als SVG rendern. Karten zeigen ANG/VER/SVC/VOR/RÜC, Gesamtwert und Seltenheitsbezeichnungen mit Farben. Keine Rasterbildgenerierung notwendig.
-- [ ] Paarungsliste und zusätzliche Baumansicht mit tatsächlichen Teilnehmer-Verbindungen bauen; kommende Runden „Noch nicht ausgelost“, Platz 3 separat. Responsive Baum als eigener Scrollbereich; normale Ansichten bleiben bei 360 CSS-Pixeln ohne Seiten-Overflow.
-- [ ] Tests und `npm run build` ausführen; Tastaturfokus, Kontraste, 44-Pixel-Flächen und 360/390/desktop-Ansichten kontrollieren. Nur lokale Assets/ Systemschrift verwenden. Commit: `feat: add tournament setup rounds and player cards`.
+- [x] Komponententests schreiben: Standard Viertelfinale/1; Anzahl 8 Teams/8 Matches; neue Meisterschaft per einmaliger Aktion; aktives Turnier zeigt Fortsetzen und bestätigtes Verwerfen. Speicherfehler navigiert nicht. Rundenbutton nur nach vollständiger Runde; abgeschlossene Partien öffnen; künftige Paarungen sind nicht erfunden.
+- [x] Tests scheitern lassen, dann Grundlayout im bestätigten Stil implementieren. Flaggen vollständig lokal erstellen, alle 69 Köpfe anhand fester Definitionen als SVG rendern. Karten zeigen ANG/VER/SVC/VOR/RÜC, Gesamtwert und Seltenheitsbezeichnungen mit Farben. Keine Rasterbildgenerierung notwendig.
+- [x] Paarungsliste und zusätzliche Baumansicht mit tatsächlichen Teilnehmer-Verbindungen bauen; kommende Runden „Noch nicht ausgelost“, Platz 3 separat. Responsive Baum als eigener Scrollbereich; normale Ansichten bleiben bei 360 CSS-Pixeln ohne Seiten-Overflow.
+- [x] Tests und `npm run build` ausführen; Tastaturfokus, Kontraste, 44-Pixel-Flächen und 360/390/desktop-Ansichten kontrollieren. Nur lokale Assets/ Systemschrift verwenden. Commit: `feat: add tournament setup rounds and player cards`.
+
 
 ## Aufgabe 5: Ergebniseingabe, Siegerehrung und Archiv
 
@@ -121,11 +139,12 @@ Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives T
 
 **Schnittstellen:** Matchansicht verwendet `evaluateDraft` und Repository-Befehle, nie eine zweite Satzwertung. Ergebnis- und Archivansichten lesen ausschließlich Snapshots; nach Archivierung keine schreibenden Callbacks anbieten.
 
-- [ ] Interaktionstests schreiben: zwei leere große Felder bei 1 Satzsieg, `inputmode="numeric"`, vorhandener Inhalt beim Fokus selektiert, gültige Folgezeile bei 2/3 Satzsiegen, verständliche Zeilenfehler. 11:10 deaktiviert Abschluss; 12:10 erlaubt Abschluss und Rückkehr erst nach Speichererfolg.
-- [ ] Korrekturtests: bereits abgeschlossenes Ergebnis vor Neuauslosung editieren; vorläufiger Draft entfernt den alten Sieger aus dem Fortschritt. Bei früherem Matchende überzählige Sätze abschneiden und Meldung zeigen. Nach Auslosung bzw. Archivierung nur lesen. Browser-Neuladen übernimmt zuletzt gespeicherte Eingabe.
-- [ ] Tests für Finale/Platz 3 in beiden Reihenfolgen, fertiges nicht archiviertes Turnier nach Neustart, doppelte Archivbetätigung, sämtliche geteilten Ränge und vollständige Archivdetails schreiben. Archivdatum/Sieger/Runde/Satzregel sichtbar; kein Neu-Auswürfeln beim Öffnen.
-- [ ] Tests vor Implementierung scheitern lassen, Ansichten und Navigation bauen. Fachliche Aktionen mit Pending-Zustand gegen Doppeltippen schützen, echte Fehlermeldungen sichtbar ausgeben. Hauptmenü erlaubt Rückkehr und Archiv; keine echte Personenzuordnung und keine Plus-/Minus-Pflicht.
-- [ ] Relevante Komponenten-/Speichertests, Typecheck und Build erfolgreich ausführen. Manuell Beispielpartie eingeben und ganze Meisterschaft abschließen. Commit: `feat: add results entry podium and tournament archive`.
+- [x] Interaktionstests schreiben: zwei leere große Felder bei 1 Satzsieg, `inputmode="numeric"`, vorhandener Inhalt beim Fokus selektiert, gültige Folgezeile bei 2/3 Satzsiegen, verständliche Zeilenfehler. 11:10 deaktiviert Abschluss; 12:10 erlaubt Abschluss und Rückkehr erst nach Speichererfolg.
+- [x] Korrekturtests: bereits abgeschlossenes Ergebnis vor Neuauslosung editieren; vorläufiger Draft entfernt den alten Sieger aus dem Fortschritt. Bei früherem Matchende überzählige Sätze abschneiden und Meldung zeigen. Nach Auslosung bzw. Archivierung nur lesen. Browser-Neuladen übernimmt zuletzt gespeicherte Eingabe.
+- [x] Tests für Finale/Platz 3 in beiden Reihenfolgen, fertiges nicht archiviertes Turnier nach Neustart, doppelte Archivbetätigung, sämtliche geteilten Ränge und vollständige Archivdetails schreiben. Archivdatum/Sieger/Runde/Satzregel sichtbar; kein Neu-Auswürfeln beim Öffnen.
+- [x] Tests vor Implementierung scheitern lassen, Ansichten und Navigation bauen. Fachliche Aktionen mit Pending-Zustand gegen Doppeltippen schützen, echte Fehlermeldungen sichtbar ausgeben. Hauptmenü erlaubt Rückkehr und Archiv; keine echte Personenzuordnung und keine Plus-/Minus-Pflicht.
+- [x] Relevante Komponenten-/Speichertests, Typecheck und Build erfolgreich ausführen. Manuell Beispielpartie eingeben und ganze Meisterschaft abschließen. Commit: `feat: add results entry podium and tournament archive`.
+
 
 ## Aufgabe 6: Installierbare PWA mit verlässlichem Offline-Cache
 
@@ -133,11 +152,12 @@ Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives T
 
 **Schnittstellen:** `registerPwa(): PwaController` liefert subscribierbaren Status `unsupported | caching | ready | updateAvailable | error` und `applyUpdate(): Promise<void>`. Status `ready` nur nach vollständigem verpflichtendem Precache und aktivem kontrollierendem Worker, nicht allein wegen `navigator.onLine` oder Registration-Erfolg. UI zeigt Installationshilfe je Plattformfähigkeit; Apple-Startbildschirm-Hinweise als manueller Weg.
 
-- [ ] Clienttests schreiben: fehlender sicherer Kontext/SW → unsupported; fehlgeschlagener Cache → keine Offline-Zusage; wartender Worker → Update-Hinweis ohne Reload. Keine automatische Aktivierung mit `skipWaiting` und kein automatischer Seitenwechsel während eines Matches.
-- [ ] Playwright offline-Test anlegen: gebauten Stand frisch laden, explizit auf Cache-Bereitschaft warten, Browser offline setzen, Seite neu öffnen, neues Turnier durchspielen und Archiv öffnen. Lokale Flaggen/Porträts müssen sichtbar bleiben. Bei Erstaufruf ohne Netz verständlicher Browserfehler zulässig, keine fiktive Verfügbarkeit.
-- [ ] Update-Test mit zwei lokal gebauten Versionen vorbereiten: aktiven Draft erfassen, neue Version verfügbar machen, Update ablehnen → Draft/Seite unverändert; später nach abgeschlossenem Speichern akzeptieren → neue Version und gleiche Daten. Fehlgeschlagene neue Cache-Installation lässt alte Offline-Version nutzbar. Unbekannte Datenversion wird vom alten Frontend lesbar als Fehler gemeldet, nicht überschrieben.
-- [ ] Tests scheitern lassen; Workbox-Precache via injectManifest konfigurieren, alle nötigen lokalen Assets einschließlich dynamischer Flaggen aufnehmen. Manifest mit Namen, Icons, Start-URL, Theme und Standalone; Icons aus eigenen Vektorformen lokal rendern. Keine externen Requests für Installation oder Darstellung.
-- [ ] `npm test -- src/pwa`, `npm run build`, `npm run test:e2e -- tests/e2e/offline.spec.ts tests/e2e/updates.spec.ts` ausführen. Playwright darf localhost als sicheren Testkontext verwenden; echte LAN-Zertifikatsprüfung bleibt Aufgabe 7. Commit: `feat: enable installation offline use and safe updates`.
+- [x] Clienttests schreiben: fehlender sicherer Kontext/SW → unsupported; fehlgeschlagener Cache → keine Offline-Zusage; wartender Worker → Update-Hinweis ohne Reload. Keine automatische Aktivierung mit `skipWaiting` und kein automatischer Seitenwechsel während eines Matches.
+- [x] Playwright offline-Test anlegen: gebauten Stand frisch laden, explizit auf Cache-Bereitschaft warten, Browser offline setzen, Seite neu öffnen, neues Turnier durchspielen und Archiv öffnen. Lokale Flaggen/Porträts müssen sichtbar bleiben. Bei Erstaufruf ohne Netz verständlicher Browserfehler zulässig, keine fiktive Verfügbarkeit.
+- [x] Update-Test mit zwei lokal gebauten Versionen vorbereiten: aktiven Draft erfassen, neue Version verfügbar machen, Update ablehnen → Draft/Seite unverändert; später nach abgeschlossenem Speichern akzeptieren → neue Version und gleiche Daten. Fehlgeschlagene neue Cache-Installation lässt alte Offline-Version nutzbar. Unbekannte Datenversion wird vom alten Frontend lesbar als Fehler gemeldet, nicht überschrieben.
+- [x] Tests scheitern lassen; Workbox-Precache via injectManifest konfigurieren, alle nötigen lokalen Assets einschließlich dynamischer Flaggen aufnehmen. Manifest mit Namen, Icons, Start-URL, Theme und Standalone; Icons aus eigenen Vektorformen lokal rendern. Keine externen Requests für Installation oder Darstellung.
+- [x] `npm test -- src/pwa`, `npm run build`, `npm run test:e2e -- tests/e2e/offline.spec.ts tests/e2e/updates.spec.ts` ausführen. Playwright darf localhost als sicheren Testkontext verwenden; echte LAN-Zertifikatsprüfung bleibt Aufgabe 7. Commit: `feat: enable installation offline use and safe updates`.
+
 
 ## Aufgabe 7: Lokaler HTTPS-Betrieb und vollständige Abnahme
 
@@ -145,12 +165,13 @@ Entscheidung: IndexedDB mit Stores `tournaments` (keyPath ID), `meta` (aktives T
 
 **Schnittstellen:** `npm run serve:lan` startet Node-HTTPS-Server für `dist/` an `0.0.0.0`, Port standardmäßig 8443. Konfiguration über `LAN_PORT`, `LAN_TLS_CERT`, `LAN_TLS_KEY`; Standardpfade `.certs/lan-cert.pem` und `.certs/lan-key.pem`. Kein automatisches Erzeugen von CA, Zertifikaten oder Trust-Änderungen beim Start.
 
-- [ ] Servertests schreiben: fehlende Zertifikate/fehlender Build erklären Fehler statt HTTP-Fallback; nur Dateien innerhalb `dist/` erreichbar, Pfad-Traversal abweisen, korrekte MIME-Typen für JS/SVG/Manifest, Service Worker ohne dauerhaften HTTP-Cache. Danach minimalen statischen Server mit Node-Bordmitteln implementieren; keine API/Serverdatenbank.
-- [ ] HTTPS-Anleitung erstellen: feste LAN-Adresse/Name, lokale CA etwa mit mkcert (manuell zu installierendes Zusatzwerkzeug, keine automatische Systemänderung), Zertifikat mit passendem IP-/DNS-SAN, Ablage unter `.certs/`, nur öffentliches CA-Zertifikat zum Telefon übertragen, dort installieren und Vertrauen aktivieren. Separate iOS-/Android-Hinweise anhand offizieller aktueller Dokumentation bei Umsetzung verifizieren. Kein privater CA-Schlüssel aufs Smartphone, keine Router-Portfreigabe. Startbefehle und Origin-Bindung erklären.
-- [ ] E2E-Prüfungen schreiben: alle Einstiegsrunden vom Start bis Archiv; 1/2/3 Satzsiege über Testmatrix; mehrfacher Klick während künstlich langsamer Speicherung; zweiter Tab lesend und Übernahme nach Lease-Ablauf; Neustart erhält Namen, Werte, Auslosungen und Entwürfe. Vor Produktanpassungen fehlschlagende Fälle beobachten.
-- [ ] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e` ausführen; Ergebnisse dokumentieren, Fehler beheben und nur betroffene Prüfungen wiederholen, sofern der Fehler keine breitere Wirkung hat.
+- [x] Servertests schreiben: fehlende Zertifikate/fehlender Build erklären Fehler statt HTTP-Fallback; nur Dateien innerhalb `dist/` erreichbar, Pfad-Traversal abweisen, korrekte MIME-Typen für JS/SVG/Manifest, Service Worker ohne dauerhaften HTTP-Cache. Danach minimalen statischen Server mit Node-Bordmitteln implementieren; keine API/Serverdatenbank.
+- [x] HTTPS-Anleitung erstellen: feste LAN-Adresse/Name, lokale CA etwa mit mkcert (manuell zu installierendes Zusatzwerkzeug, keine automatische Systemänderung), Zertifikat mit passendem IP-/DNS-SAN, Ablage unter `.certs/`, nur öffentliches CA-Zertifikat zum Telefon übertragen, dort installieren und Vertrauen aktivieren. Separate iOS-/Android-Hinweise anhand offizieller aktueller Dokumentation bei Umsetzung verifizieren. Kein privater CA-Schlüssel aufs Smartphone, keine Router-Portfreigabe. Startbefehle und Origin-Bindung erklären.
+- [x] E2E-Prüfungen schreiben: alle Einstiegsrunden vom Start bis Archiv; 1/2/3 Satzsiege über Testmatrix; mehrfacher Klick während künstlich langsamer Speicherung; zweiter Tab lesend und Übernahme nach Lease-Ablauf; Neustart erhält Namen, Werte, Auslosungen und Entwürfe. Vor Produktanpassungen fehlschlagende Fälle beobachten.
+- [x] `npm run typecheck`, `npm run lint`, `npm test`, `npm run build`, `npm run test:e2e` ausführen; Ergebnisse dokumentieren, Fehler beheben und nur betroffene Prüfungen wiederholen, sofern der Fehler keine breitere Wirkung hat.
 - [ ] Auf echtem Smartphone HTTPS ohne Zertifikatswarnung und `window.isSecureContext` prüfen. App installieren, Zahlentastatur/Fokus, 44-Pixel-Touchflächen, Baumscroll und Lesbarkeit testen. Nach Offline-Bereitschaft Heimserver stoppen bzw. Verbindung trennen, App schließen/erneut öffnen, Turnier spielen und Archiv ansehen. Desktop ebenfalls prüfen. Agenten-Browsertests ersetzen diese Hardwareprüfung nicht; falls kein Zugriff möglich, offene manuelle Punkte klar in `docs/acceptance.md` lassen, ohne sie als bestanden zu markieren.
-- [ ] Abnahme dokumentieren und ausschließlich geprüfte Änderungen committen: `feat: support trusted LAN HTTPS and document acceptance`. Keine Veröffentlichung, kein Merge/Push ohne passenden Auftrag.
+- [x] Abnahme dokumentieren und ausschließlich geprüfte Änderungen committen: `feat: support trusted LAN HTTPS and document acceptance`. Keine Veröffentlichung, kein Merge/Push ohne passenden Auftrag.
+
 
 ## Selbstprüfung und Übergabe
 
@@ -159,3 +180,5 @@ Plan gegen das freigegebene Design geprüft: Katalog und Porträts (1/4), Gewich
 Reihenfolge: 1 → 2 → 3 → 4 → 5 → 6 → 7. Nach jedem abgeschlossenen Aufgabenschritt Zustand prüfen; nach jeder Aufgabe Commit und kurze Rückmeldung. Bei Abweichungen den Plan aktualisieren, statt still den Umfang zu verändern.
 
 Empfehlung: native Umsetzung in dieser Sitzung, weil die sieben Aufgaben eng auf denselben Typen und Snapshots aufbauen. Ein unabhängiger Review der gesamten Implementierung vor Abschluss ergänzt Fach-, Speicher- und Browserprüfungen. Alternativ aufgabenweise Umsetzung und Review durch jeweils frische Subagenten; das bietet frühere unabhängige Prüfungen bei höherem Kontextaufwand.
+
+Gewählte Ausführung: Subagenten pro Aufgabe und unabhängiges Aufgabenreview; der ursprünglich empfohlene native Ansatz wurde nicht gewählt.

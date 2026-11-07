@@ -741,3 +741,61 @@ nav button {
 }
 .round-heading { flex-wrap: wrap; }
 .round-heading > div { min-width: 0; }
+
+.score-panel {
+  max-width: 660px;
+  margin: 24px auto;
+  padding: 24px;
+}
+.score-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.score-fields label { min-width: 0; }
+.score-fields span { display: block; font-size: 12px; overflow-wrap: anywhere; margin-bottom: 8px; }
+.score-fields input {
+  width: 100%;
+  min-height: 72px;
+  min-width: 0;
+  border: 2px solid var(--line);
+  background: #fffaf0;
+  color: var(--green);
+  border-radius: 12px;
+  text-align: center;
+  font-size: 36px;
+  font-weight: 800;
+}
+.score-fields input[aria-invalid=true] { border-color: #9d3816; }
+.set-error { color: #792b13; font-size: 14px; margin-top: 10px; }
+.winner-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+  border-radius: 20px;
+  background: var(--green);
+  color: #fff8e4;
+}
+.winner-banner > div { min-width: 0; overflow-wrap: anywhere; flex: 1; }
+.winner-banner .portrait { flex-shrink: 0; }
+.winner-banner h3 { margin: 10px 0; font-size: 26px; }
+.winner-banner p { margin: 0; }
+.placements { list-style: none; padding: 8px 20px; }
+.placements li { display: flex; align-items: center; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.placements li:last-child { border: 0; }
+.placements strong { min-width: 58px; font-size: 13px; }
+.placements span { min-width: 0; overflow-wrap: anywhere; font-weight: 750; }
+.placements small { display: block; margin-top: 4px; font-weight: 400; }
+.archive-card { padding: 24px; overflow-wrap: anywhere; }
+.archive-card p { font-size: 14px; }
+.profile-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+@media (max-width: 720px) {
+  .score-panel { padding: 20px 14px; }
+  .score-fields { gap: 10px; }
+  .winner-banner { gap: 12px; padding: 18px 12px; }
+  .winner-banner .portrait { width: 72px; height: 85px; }
+  .winner-banner h3 { font-size: 22px; }
+  .winner-banner .flag { width: 30px; }
+  .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}

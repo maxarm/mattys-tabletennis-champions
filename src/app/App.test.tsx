@@ -54,7 +54,7 @@ it('resumes the persisted round and opens fixed snapshot player cards', async ()
     fireEvent.click(resume);
     expect(await screen.findByRole('heading', { name: 'Finale.' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Spiel 1 öffnen' }));
-    expect(await screen.findByText('Ergebniseingabe folgt in Task 5')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Spiel abschließen/ })).toBeDisabled();
     for (const p of t.participants)
         expect(screen.getByRole('heading', { name: p.name })).toBeInTheDocument();
     expect(await repo.loadActive()).toEqual(t);

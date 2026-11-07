@@ -1,0 +1,229 @@
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
+import { afterEach, expect, it, vi } from 'vitest'
+import { TournamentApp } from './App'
+import { openRepository } from '../storage/repository'
+import { applyCommand, createTournament } from '../domain/tournament'
+import type { WinsRequired, EntryRound } from '../domain/types'
+import { context } from '../../tests/fixtures'
+
+const repos: Awaited<ReturnType<typeof openRepository>>[] = []
+afterEach(() => { for (const repo of repos) repo.close(); repos.length = 0 })
+async function setup(t = createTournament({ entryRound: 'final', winsRequired: 1 }, context())) {
+  const repo = await openRepository({ name: `task5-${crypto.randomUUID()}` })
+  repos.push(repo)
+  await repo.acquireSession('seed')
+  await repo.create(t, 'seed')
+  await repo.releaseSession('seed')
+  const view = render(<TournamentApp repository={repo} />)
+  const resume = await screen.findByRole('button', { name: 'Turnier fortsetzen' })
+  await waitFor(() => expect(resume).toBeEnabled())
+  fireEvent.click(resume)
+  return { repo, view }
+}
+async function openMatch(index = 1) {
+  fireEvent.click(await screen.findByRole('button', { name: new RegExp(`^Spiel ${index} öffnen`) }))
+  await screen.findByRole('heading', { name: /Aufschlag!|Spiel um Platz 3/ })
+}
+function score(row: number, a: string, b: string) {
+  const group = screen.getByRole('group', { name: `Satz ${row}` })
+  const fields = within(group).getAllByRole('textbox')
+  fireEvent.change(fields[0]!, { target: { value: a } })
+  fireEvent.change(fields[1]!, { target: { value: b } })
+  return fields
+}
+function finished(entryRound: EntryRound = 'final', winsRequired: WinsRequired = 1) {
+  const ctx = context()
+  let t = createTournament({ entryRound, winsRequired }, ctx)
+  while (t.status === 'playing') {
+    const round = t.rounds.at(-1)!
+    for (const match of round.matches) t = applyCommand(t, { type: 'completeMatch', matchId: match.id, sets: Array.from({ length: winsRequired }, () => ['11', '5'] as const) }, ctx)
+    if (t.status === 'playing') t = applyCommand(t, { type: 'drawNextRound', roundId: round.id }, ctx)
+  }
+  return t
+}
+it('uses direct numeric fields, validates deuce, selects text and returns only after successful storage', async () => {
+  const { repo } = await setup()
+  await openMatch()
+  expect(screen.getAllByRole('textbox')).toHaveLength(2)
+  for (const field of screen.getAllByRole('textbox')) { expect(field).toHaveValue(''); expect(field).toHaveAttribute('inputmode', 'numeric') }
+  score(1, '11', '10')
+  expect(screen.getByRole('button', { name: /Spiel abschließen/ })).toBeDisabled()
+  expect(screen.getByText(/zwei Punkte/)).toBeInTheDocument()
+  const fields = score(1, '12', '10')
+  fireEvent.focus(fields[0]!)
+  expect((fields[0] as HTMLInputElement).selectionEnd).toBe(2)
+  const dispatch = repo.dispatch.bind(repo)
+  let release!: () => void
+  const spy = vi.spyOn(repo, 'dispatch').mockImplementation(async (...args) => {
+    if (args[3].type === 'completeMatch') await new Promise<void>(yes => { release = yes })
+    return dispatch(...args)
+  })
+  const complete = screen.getByRole('button', { name: /Spiel abschließen/ })
+  fireEvent.click(complete); fireEvent.click(complete)
+  await waitFor(() => expect(release).toBeTypeOf('function'))
+  expect(screen.getByRole('heading', { name: 'Aufschlag!' })).toBeInTheDocument()
+  release()
+  await screen.findByRole('heading', { name: 'Finale.' })
+  expect(spy.mock.calls.filter(c => c[3].type === 'completeMatch')).toHaveLength(1)
+  expect((await repo.loadActive())?.status).toBe('finished')
+})
+it('keeps the match and draft visible on failed completion despite the resolved app action', async () => {
+  const { repo } = await setup()
+  await openMatch(); score(1, '11', '9')
+  const original = repo.dispatch.bind(repo)
+  vi.spyOn(repo, 'dispatch').mockImplementation((...args) => args[3].type === 'completeMatch' ? Promise.reject(new Error('Ergebnis nicht gespeichert')) : original(...args))
+  fireEvent.click(screen.getByRole('button', { name: /Spiel abschließen/ }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('Ergebnis nicht gespeichert')
+  expect(screen.getByRole('heading', { name: 'Aufschlag!' })).toBeInTheDocument()
+  expect(screen.getAllByRole('textbox')[0]).toHaveValue('11')
+})
+it.each([2, 3] as const)('adds rows for %i wins and trims stale sets on correction', async winsRequired => {
+  await setup(createTournament({ entryRound: 'final', winsRequired }, context()))
+  await openMatch()
+  score(1, '11', '5'); score(2, '5', '11')
+  for (let row = 3; row <= winsRequired + 1; row++) score(row, '11', '5')
+  expect(screen.getAllByRole('textbox')).toHaveLength((winsRequired + 1) * 2)
+  score(2, '11', '5')
+  expect(screen.getAllByRole('textbox')).toHaveLength(winsRequired * 2)
+  expect(screen.getByRole('status', { name: 'Satzkorrektur' })).toHaveTextContent(/überzählige/i)
+})
+it('persists drafts across remount and clears the old completed winner when correcting', async () => {
+  const t = finished()
+  const { repo, view } = await setup(t)
+  await screen.findByRole('heading', { name: 'Siegerehrung' })
+  fireEvent.click(screen.getByRole('button', { name: /Zur Runde/ }))
+  await openMatch()
+  score(1, '', '9')
+  fireEvent.blur(screen.getAllByRole('textbox')[0]!)
+  await waitFor(async () => expect((await repo.loadActive())?.rounds[0]?.matches[0]?.status).toBe('pending'))
+  view.unmount()
+  await waitFor(async () => expect(await repo.acquireSession('probe')).toBe(true))
+  await repo.releaseSession('probe')
+  render(<TournamentApp repository={repo} />)
+  const resume = await screen.findByRole('button', { name: 'Turnier fortsetzen' })
+  await waitFor(() => expect(resume).toBeEnabled()); fireEvent.click(resume)
+  expect(await screen.findByText('0 von 1 Spielen abgeschlossen')).toBeInTheDocument()
+  await openMatch()
+  expect(screen.getAllByRole('textbox')[0]).toHaveValue('')
+  expect(screen.getAllByRole('textbox')[1]).toHaveValue('9')
+})
+it.each([1, 2])('completes final and bronze in order starting with match %i', async first => {
+  const ctx = context()
+  let t = createTournament({ entryRound: 'semifinal', winsRequired: 1 }, ctx)
+  for (const m of t.rounds[0]!.matches) t = applyCommand(t, { type: 'completeMatch', matchId: m.id, sets: [['11','4']] }, ctx)
+  t = applyCommand(t, { type: 'drawNextRound', roundId: t.rounds[0]!.id }, ctx)
+  const { repo } = await setup(t)
+  await openMatch(first); score(1, '11', '4')
+  fireEvent.click(screen.getByRole('button', { name: /Spiel abschließen/ }))
+  await screen.findByRole('heading', { name: 'Finalrunde.' })
+  expect((await repo.loadActive())?.status).toBe('playing')
+  await openMatch(first === 1 ? 2 : 1); score(1, '11', '4')
+  fireEvent.click(screen.getByRole('button', { name: /Spiel abschließen/ }))
+  await screen.findByRole('button', { name: 'Zur Siegerehrung →' })
+  expect((await repo.loadActive())?.status).toBe('finished')
+})
+it('shows historical games read-only and archives once after awaited save with complete snapshot details', async () => {
+  const t = finished('roundOf16')
+  const { repo } = await setup(t)
+  await screen.findByRole('heading', { name: 'Siegerehrung' })
+  const placements = screen.getByRole('list', { name: 'Platzierungen' })
+  expect(within(placements).getAllByRole('listitem')).toHaveLength(16)
+  expect(within(placements).getAllByText('Platz 5')).toHaveLength(4)
+  expect(within(placements).getAllByText('Platz 9')).toHaveLength(8)
+  fireEvent.click(screen.getByRole('button', { name: /Zur Runde/ }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Turnierbaum' }))
+  fireEvent.click(screen.getAllByRole('button', { name: /Achtelfinale Spiel 1 öffnen/ })[0]!)
+  expect(await screen.findByText(/Nächste Runde bereits ausgelost/)).toBeInTheDocument()
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', { name: /Zur Runde/ }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Zur Siegerehrung →' }))
+  const dispatch = repo.dispatch.bind(repo)
+  let release!: () => void
+  const spy = vi.spyOn(repo, 'dispatch').mockImplementation(async (...args) => {
+    if (args[3].type === 'archive') await new Promise<void>(yes => { release = yes })
+    return dispatch(...args)
+  })
+  const archive = await screen.findByRole('button', { name: 'Speichern und Beenden' })
+  fireEvent.click(archive); fireEvent.click(archive)
+  await waitFor(() => expect(release).toBeTypeOf('function'))
+  expect(screen.getByRole('heading', { name: 'Siegerehrung' })).toBeInTheDocument()
+  release()
+  await screen.findByRole('heading', { name: 'Neue Meisterschaft' })
+  expect(spy.mock.calls.filter(c => c[3].type === 'archive')).toHaveLength(1)
+  expect(await repo.loadActive()).toBeUndefined()
+  fireEvent.click(screen.getByRole('button', { name: 'Archiv' }))
+  fireEvent.click(await screen.findByRole('button', { name: /Meisterschaft ansehen/ }))
+  await screen.findByRole('heading', { name: 'Meisterschaft im Archiv' })
+  expect(screen.getByText(/Archiviert am/)).toBeInTheDocument()
+  expect(screen.getByText(/Einstieg: Achtelfinale/)).toBeInTheDocument()
+  expect(screen.getByText(/1 Satzsieg/)).toBeInTheDocument()
+  expect(screen.getAllByRole('heading', { level: 3 }).length).toBeGreaterThanOrEqual(16)
+  expect(screen.getAllByText(/11 : 5/)).toHaveLength(16)
+  expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', { name: 'Speichern und Beenden' })).not.toBeInTheDocument()
+  expect((await repo.listArchives())[0]?.participants).toEqual(t.participants)
+})
+it('retains the podium on archive failure and retries with one operation identity', async () => {
+  const { repo } = await setup(finished())
+  const archive = await screen.findByRole('button', { name: 'Speichern und Beenden' })
+  const original = repo.dispatch.bind(repo)
+  let fail = true
+  const spy = vi.spyOn(repo, 'dispatch').mockImplementation((...args) => {
+    if (args[3].type === 'archive' && fail) { fail = false; return Promise.reject(new Error('Archiv nicht gespeichert')) }
+    return original(...args)
+  })
+  fireEvent.click(archive)
+  expect(await screen.findByRole('alert')).toHaveTextContent('Archiv nicht gespeichert')
+  expect(screen.getByRole('heading', { name: 'Siegerehrung' })).toBeInTheDocument()
+  await waitFor(() => expect(archive).toBeEnabled())
+  fireEvent.click(archive)
+  await screen.findByRole('heading', { name: 'Neue Meisterschaft' })
+  const calls = spy.mock.calls.filter(c => c[3].type === 'archive')
+  expect(calls).toHaveLength(2)
+  expect(calls[0]![2]).toBe(calls[1]![2])
+})
+it('keeps full accessible round names with short mobile labels', async () => {
+  const repo = await openRepository({ name: `labels-${crypto.randomUUID()}` })
+  repos.push(repo)
+  render(<TournamentApp repository={repo} />)
+  await waitFor(() => expect(screen.getByRole('radio', { name: 'Achtelfinale' })).toBeEnabled())
+  expect(screen.getByText('Achtel')).toBeInTheDocument()
+  expect(screen.getByText('Viertel')).toBeInTheDocument()
+})
+it('retries an unacknowledged completion with the same operation ID until the draft changes', async () => {
+  const { repo } = await setup()
+  await openMatch(); score(1, '11', '9')
+  const original = repo.dispatch.bind(repo)
+  let fail = true
+  const spy = vi.spyOn(repo, 'dispatch').mockImplementation(async (...args) => {
+    const saved = await original(...args)
+    if (args[3].type === 'completeMatch' && fail) { fail = false; throw new Error('Antwort unterbrochen') }
+    return saved
+  })
+  fireEvent.click(screen.getByRole('button', { name: /Spiel abschließen/ }))
+  await screen.findByText('Antwort unterbrochen')
+  const complete = screen.getByRole('button', { name: /Spiel abschließen/ })
+  await waitFor(() => expect(complete).toBeEnabled())
+  fireEvent.click(complete)
+  await screen.findByRole('heading', { name: 'Finale.' })
+  const calls = spy.mock.calls.filter(c => c[3].type === 'completeMatch')
+  expect(calls).toHaveLength(2)
+  expect(calls[0]![2]).toBe(calls[1]![2])
+})
+it('uses a fresh completion identity after edits even when the points return to the previous value', async () => {
+  const { repo } = await setup()
+  await openMatch(); score(1, '11', '9')
+  const original = repo.dispatch.bind(repo)
+  let fail = true
+  const spy = vi.spyOn(repo, 'dispatch').mockImplementation((...args) => {
+    if (args[3].type === 'completeMatch' && fail) { fail = false; return Promise.reject(new Error('Schreiben fehlgeschlagen')) }
+    return original(...args)
+  })
+  fireEvent.click(screen.getByRole('button', { name: /Spiel abschließen/ }))
+  await screen.findByText('Schreiben fehlgeschlagen')
+  score(1, '11', '8'); score(1, '11', '9')
+  fireEvent.click(screen.getByRole('button', { name: /Spiel abschließen/ }))
+  await screen.findByRole('heading', { name: 'Finale.' })
+  const calls = spy.mock.calls.filter(c => c[3].type === 'completeMatch')
+  expect(calls[0]![2]).not.toBe(calls[1]![2])
+})

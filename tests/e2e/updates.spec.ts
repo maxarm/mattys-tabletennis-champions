@@ -15,12 +15,15 @@ async function draft(page: Page) {
 }
 test('declining keeps match and draft; explicit saved update loads next version with same data', async ({ page, request }) => {
   await request.get('/__version?v=a'); await ready(page); await draft(page)
-  const oldController = await page.evaluate(() => navigator.serviceWorker.controller!.scriptURL)
+  const oldBuild = await page.locator('meta[name="test-build"]').getAttribute('content')
+  const oldReloads = await page.evaluate(() => Number(sessionStorage.getItem('test-reloads') ?? '0'))
+  await page.addInitScript(() => { sessionStorage.setItem('test-reloads', String(Number(sessionStorage.getItem('test-reloads') ?? '0') + 1)) })
   await request.get('/__version?v=b'); await checkUpdate(page)
   await expect(page.getByRole('button', { name: 'Jetzt aktualisieren' })).toBeDisabled()
   await page.getByRole('button', { name: 'Später', exact: true }).click()
   await expect(page.locator('input[inputmode="numeric"]').nth(0)).toHaveValue('7')
-  expect(await page.evaluate(() => navigator.serviceWorker.controller!.scriptURL)).toBe(oldController)
+  await expect(page.locator('meta[name="test-build"]')).toHaveAttribute('content', oldBuild!)
+  expect(await page.evaluate(() => Number(sessionStorage.getItem('test-reloads') ?? '0'))).toBe(oldReloads)
   await page.getByRole('button', { name: '← Zur Runde' }).click()
   await page.getByRole('button', { name: 'Update anzeigen' }).click()
   await page.getByRole('button', { name: 'Jetzt aktualisieren' }).click()
